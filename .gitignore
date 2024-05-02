@@ -11,4 +11,5 @@
 .ParserLexer/*.log
 .ParserLexer/*.dvi
 .ParserLexer/*.aux
+.jpp-random/
 *~

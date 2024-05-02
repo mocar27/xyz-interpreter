@@ -33,6 +33,7 @@ library
       ParserLexer.PrintXyzGrammar
       ParserLexer.SkelXyzGrammar
       ParserLexer.TestXyzGrammar
+      TypeChecker.TypeChecker
   other-modules:
       Paths_xyz_interpreter
   autogen-modules:
