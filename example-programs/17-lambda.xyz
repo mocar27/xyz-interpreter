@@ -1,0 +1,8 @@
+Integer function lambda (Integer a) {
+    return (Integer x) => Integer {x = a + x; return x;};
+}
+
+Void function main() {
+    Integer(Integer) l = lambda(1);
+    print(l(1));    // 2
+}

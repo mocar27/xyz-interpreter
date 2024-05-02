@@ -1,0 +1,14 @@
+.stack-work/
+.DS_Store
+.ParserLexer/*.hi
+.ParserLexer/*.o
+.ParserLexer/*.bak
+.ParserLexer/*.txt
+.ParserLexer/*.x
+.ParserLexer/*.y
+.ParserLexer/*.info
+.ParserLexer/TestXyzGrammar
+.ParserLexer/*.log
+.ParserLexer/*.dvi
+.ParserLexer/*.aux
+*~

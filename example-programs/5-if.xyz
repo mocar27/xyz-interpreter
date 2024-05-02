@@ -1,0 +1,18 @@
+Void function main() {
+    
+    Integer x = 5;
+    Boolean yes = true;
+    Boolean no = false;
+
+    if(yes && no) {
+        return;
+    }
+
+    if(yes || no) {
+        printInt(x);
+    }
+
+    else {
+        printInt(x * x);
+    }
+}

@@ -1,0 +1,35 @@
+XYZ to imperatywny język, który jest oparty na dostarczonej gramatyce języka Latte.
+Choć język opiera się na gramatyce Latte, większość konstrukcji została zmieniona 
+oraz dodatkowo XYZ wzbogacony jest o kilka rzeczy, które nie są zawarte w typowym, 
+podstawowym Latte (np. przyjmowanie argumentów do funkcji przez zmienną), opis poniżej.
+
+Konkretny opis języka z tabelki cech:
+1. Język zawiera 3 typy wartości: Integer, String oraz Boolean.
+2. Literały, arytmetyka oraz porównania typów wartości jak w Latte.
+3. Zmienne oraz operacja przypisania zmiennych odbywa się następująco:
+   - {Typ zmiennej} {Nazwa zmiennej} = {Wartość zmiennej, bądź jej brak}.
+4. Wypisywanie odpowiednich typów wartości przy pomocy predefiniowanych funkcji
+   odpowiednio dla typu, jak w Latte: printInt, printString, printBoolean.
+5. Konstrukcje `while` oraz `if` i `if else` tworzymy w następujący sposób:
+   - while {Wyrażenie Boolean-owskie} Block;
+   - if {Wyrażenie Boolean-owskie} Block;
+   - if {Wyrażenie Boolean-owskie} Block else Block;
+   * Język wymusza po instrukcjach while, if oraz if else podania koniecznie instrukcji blokowej,
+     która jest zawarta w nawiasy klamrowe: '{' oraz '}'.
+6. Język pozwala na tworzenie funkcji oraz procedur w następujący sposób:
+   - {Typ funkcji} `function` {Nazwa funkcji} ({Lista argumentów}) Block;
+7. W języku są dwie możliwości przesyłania argumentów do funkcji:
+   - przez wartość, wtedy należy jako argument do funkcji wpisać: {Typ argumentu} {Nazwa argumentu};
+   - przez zmienną, wtedy należy jako argument do funkcji wpisać: `var` {Typ argumentu} {Nazwa argumentu};
+9. W języku występuje statyczne wiązanie, stworzenie zagnieżdżonej procedury ze zmienną lokalną nazwaną tak samo jak zmienna 
+   w procedurze zewnętrzenej nadpisze ją lokalnie i podczas wołania tej zmiennej wartość w danym kontekście
+   ma większy priorytet nad wartością w kontekście zewnętrznym (W razie potrzeb zostanie rozszerzone o zmienne globalne). 
+10. Interpreter obsługuje błędy wykonania odpowiednim komunikatem oraz przy wystąpieniu takiego błędu, kończy działanie.
+11. Funkcje, opisane jak w punkcie (6.) przyjmują listę dowolnych argumentów obsługiwanych typów 
+    oraz mogą zwracać wartość o odpowiednio zadeklarowanym typie (Patrz punkt 6.). 
+12. Język XYZ jest statycznie typowany.
+13. Dozwolone jest tworzenie zagnieżdżonych funkcji.
+17a. Zmienne mogą przyjmować typ funkcji oraz mogą wtedy zostać użyte jako parametr, deklarowane w ten sposób:
+     - {Typ argumentu zwracanego przez funkcję}({Lista argumentów przyjmowanych przez funkcję}) {Nazwa zmiennej};
+17b. Dodatkowo język umożliwia tworzenie funkcji lambdy (funkcji anonimowych) w następujący sposób:
+     - ({Lista argumentów przyjmowanych do lambdy}) "=>" {Typ zwracanego argumentu przez funkcję} Block.

@@ -1,0 +1,22 @@
+Integer function main() {
+
+    Integer x;
+    Integer t = 3;
+    Integer f = 4;
+    String seven = "seven";
+    String eight = "eight";
+    Boolean six = false;
+    Boolean seven7 = true;
+
+    x = t + f;
+
+    printInt(x);
+    printString(seven);
+    printBoolean(six);
+
+    printString(seven + eight);
+    printBoolean(3 > 4);
+    printBoolean(six && seven7);
+
+    return 0;
+}
