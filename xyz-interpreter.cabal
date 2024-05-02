@@ -6,12 +6,12 @@ cabal-version: 2.2
 
 name:           xyz-interpreter
 version:        0.1.0.0
-description:    Please see the README on GitHub at <https://github.com/githubuser/xyz-interpreter#readme>
-homepage:       https://github.com/githubuser/xyz-interpreter#readme
-bug-reports:    https://github.com/githubuser/xyz-interpreter/issues
-author:         Author name here
-maintainer:     example@example.com
-copyright:      2024 Author name here
+description:    Please see the README on GitHub at <https://github.com/mocar27/xyz-interpreter#readme>
+homepage:       https://github.com/mocar27/xyz-interpreter#readme
+bug-reports:    https://github.com/mocar27/xyz-interpreter/issues
+author:         Konrad Mocarski
+maintainer:     Konrad Mocarski
+copyright:      2024 Konrad Mocarski
 license:        BSD-3-Clause
 license-file:   LICENSE
 build-type:     Simple
@@ -21,11 +21,18 @@ extra-source-files:
 
 source-repository head
   type: git
-  location: https://github.com/githubuser/xyz-interpreter
+  location: https://github.com/mocar27/xyz-interpreter
 
 library
   exposed-modules:
       Lib
+      ParserLexer.AbsXyzGrammar
+      ParserLexer.ErrM
+      ParserLexer.LexXyzGrammar
+      ParserLexer.ParXyzGrammar
+      ParserLexer.PrintXyzGrammar
+      ParserLexer.SkelXyzGrammar
+      ParserLexer.TestXyzGrammar
   other-modules:
       Paths_xyz_interpreter
   autogen-modules:

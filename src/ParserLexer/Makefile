@@ -18,8 +18,8 @@ all : TestXyzGrammar
 
 # Rules for building the parser.
 
-AbsXyzGrammar.hs LexXyzGrammar.x ParXyzGrammar.y PrintXyzGrammar.hs TestXyzGrammar.hs : ../docs/xyz-grammar.cf
-	bnfc --haskell --functor ../docs/xyz-grammar.cf
+AbsXyzGrammar.hs LexXyzGrammar.x ParXyzGrammar.y PrintXyzGrammar.hs TestXyzGrammar.hs : ../../docs/xyz-grammar.cf
+	bnfc --haskell --functor ../../docs/xyz-grammar.cf
 
 %.hs : %.y
 	${HAPPY} ${HAPPY_OPTS} $<
