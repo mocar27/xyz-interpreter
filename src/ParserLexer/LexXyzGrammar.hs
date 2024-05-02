@@ -10,7 +10,7 @@
 
 {-# LANGUAGE PatternSynonyms #-}
 
-module LexXyzGrammar where
+module ParserLexer.LexXyzGrammar where
 
 import Prelude
 

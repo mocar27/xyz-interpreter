@@ -17,7 +17,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module ErrM where
+module ParserLexer.ErrM where
 
 import Prelude             (id, const, Either(..), String)
 

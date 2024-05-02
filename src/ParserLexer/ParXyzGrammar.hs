@@ -6,7 +6,7 @@
 {-# OPTIONS_GHC -fno-warn-incomplete-patterns -fno-warn-overlapping-patterns #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module ParXyzGrammar
+module ParserLexer.ParXyzGrammar
   ( happyError
   , myLexer
   , pProgram
@@ -14,8 +14,8 @@ module ParXyzGrammar
 
 import Prelude
 
-import qualified AbsXyzGrammar
-import LexXyzGrammar
+import qualified ParserLexer.AbsXyzGrammar as AbsXyzGrammar
+import ParserLexer.LexXyzGrammar as LexXyzGrammar
 import qualified Data.Array as Happy_Data_Array
 import qualified Data.Bits as Bits
 import qualified GHC.Exts as Happy_GHC_Exts

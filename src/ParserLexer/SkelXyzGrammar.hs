@@ -4,10 +4,10 @@
 
 {-# OPTIONS_GHC -fno-warn-unused-matches #-}
 
-module SkelXyzGrammar where
+module ParserLexer.SkelXyzGrammar where
 
 import Prelude (($), Either(..), String, (++), Show, show)
-import qualified AbsXyzGrammar
+import qualified ParserLexer.AbsXyzGrammar as AbsXyzGrammar
 
 type Err = Either String
 type Result = Err String

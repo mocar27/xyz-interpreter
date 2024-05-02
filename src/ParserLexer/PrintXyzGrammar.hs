@@ -9,7 +9,7 @@
 
 -- | Pretty-printer for PrintXyzGrammar.
 
-module PrintXyzGrammar where
+module ParserLexer.PrintXyzGrammar where
 
 import Prelude
   ( ($), (.)
@@ -20,7 +20,7 @@ import Prelude
   , all, elem, foldr, id, map, null, replicate, shows, span
   )
 import Data.Char ( Char, isSpace )
-import qualified AbsXyzGrammar
+import qualified ParserLexer.AbsXyzGrammar as AbsXyzGrammar
 
 -- | The top-level printing method.
 

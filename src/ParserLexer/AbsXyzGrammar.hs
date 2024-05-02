@@ -8,7 +8,7 @@
 
 -- | The abstract syntax of language xyz-grammar.
 
-module AbsXyzGrammar where
+module ParserLexer.AbsXyzGrammar where
 
 import Prelude (Integer, String)
 import qualified Prelude as C
