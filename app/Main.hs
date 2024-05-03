@@ -1,6 +1,7 @@
 module Main (main) where
 
 import Lib
+import Prelude (print, IO)
 
 main :: IO ()
-main = someFunc
+main = print "Hello, Haskell!"

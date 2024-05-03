@@ -25,6 +25,8 @@ source-repository head
 
 library
   exposed-modules:
+      Evaluator.Evaluator
+      Interpreter.Interpreter
       Lib
       ParserLexer.AbsXyzGrammar
       ParserLexer.ErrM
