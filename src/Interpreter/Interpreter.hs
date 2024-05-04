@@ -22,6 +22,7 @@ import System.Exit                 ( exitFailure )
 
 runFile :: FilePath -> IO ()
 runFile f = readFile f >>= run
+
 -- odpala wszystko
 run :: String -> IO ()
 run s =

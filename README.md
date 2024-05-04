@@ -18,6 +18,11 @@ it runs the Evaluator.
 
 Hello
 
+## Papers and sites used during programming
+
+- https://wiki.haskell.org/wikiupload/c/c6/ICMI45-paper-en.pdf
+- https://learnyouahaskell.com/chapters
+
 ## Concluding remarks
 
 *None*
