@@ -4,4 +4,4 @@ import Lib
 import Prelude (print, IO)
 
 main :: IO ()
-main = print "Hello, Haskell!"
+main = print "Hello, World!"
