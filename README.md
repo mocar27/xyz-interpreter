@@ -18,10 +18,12 @@ it runs the Evaluator.
 
 Hello
 
-## Papers and sites used during programming
+## Sources used during programming
 
 - https://wiki.haskell.org/wikiupload/c/c6/ICMI45-paper-en.pdf
 - https://learnyouahaskell.com/chapters
+- https://kseo.github.io/posts/2016-12-30-write-you-an-interpreter.html
+- https://pappasbrent.com/blog/2022/06/11/writing-an-interpreter-in-haskell.html
 
 ## Concluding remarks
 
