@@ -2,16 +2,12 @@
 
 module Interpreter.Interpreter ( run, runFile ) where
 
-import Prelude
-  ( ($), (.)
-  , Either(..)
-  , Int, (>)
-  , String, (++), concat, unlines
-  , Show, show
-  , IO, (>>), (>>=), mapM_, putStrLn
-  , FilePath
-  , getContents, readFile, print, putStr
-  )
+import Prelude                     ( ($), (.),
+                                    Either(..), Int, (>),
+                                    String, (++), concat, unlines,
+                                    Show, show, 
+                                    IO, (>>), (>>=), mapM_, putStrLn, print, putStr,
+                                    FilePath, getContents, readFile )
 import ParserLexer.AbsXyzGrammar   ()
 import ParserLexer.LexXyzGrammar   ( Token, mkPosToken )
 import ParserLexer.ParXyzGrammar   ( pProgram, myLexer )
@@ -25,17 +21,16 @@ runFile f = readFile f >>= run
 
 -- odpala wszystko
 run :: String -> IO ()
-run s =
-  case prog of
-    Left err -> do
+run s = case prog of      -- nasz warunek ewaluacji, jak sie nie uda pojdzie do Left, jak sie uda to do Right
+    Left err -> do  -- Left -> to znaczy ze sie nie udalo
       putStrLn "\nParse              Failed...\n"
       putStrLn "Tokens:"
       mapM_ (putStrLn . showPosToken . mkPosToken) ts
       putStrLn err
       exitFailure
-    Right tree -> do
+    Right tree -> do -- Right -> to znaczy ze sie udalo
       print tree
   where
-  ts = myLexer s
-  prog = pProgram ts
-  showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
+    ts = myLexer s
+    prog = pProgram ts
+    showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
