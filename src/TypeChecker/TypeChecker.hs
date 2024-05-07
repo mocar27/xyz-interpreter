@@ -1,154 +1,157 @@
 module TypeChecker.TypeChecker where
 
--- import ParserLexer.AbsXyzGrammar as AbsXyzGrammar
--- import Data.Map                  as Map
--- -- import qualified Data.Set                  as Set
+import ParserLexer.AbsXyzGrammar as AbsXyzGrammar
+import Data.Map                  as Map
 -- -- import qualified Data.List                 as List
 -- -- import qualified Data.Maybe                as Maybe
 -- -- import qualified Data.Either               as Either
--- import qualified Control.Monad   as Monad
--- import Control.Monad.State
--- import Control.Monad.Except
--- import Control.Monad.Reader
+import qualified Control.Monad   as Monad
+import Control.Monad.State
+import Control.Monad.Except
+import Control.Monad.Reader
 
--- -- | The type of the type checker.
--- type TypeChecker a = ExceptT String (State TypeEnv) a
+-- | Environment mapping variable names to types.
+type Env = Map.Map String Type
 
--- -- | The type environment maps variables to their types.
--- type TypeEnv = Map Ident Type
+-- | The type of the type checker.
+type TypeChecker a = ReaderT Env (ExceptT String (State Int)) a
 
--- -- | The initial type environment.
--- initialTypeEnv :: TypeEnv
--- initialTypeEnv = Map.empty
+-- | Run the type checker.
+runTypeChecker :: AbsXyzGrammar.Program -> Either String ()
+runTypeChecker program = evalState (runExceptT (runReaderT (typeCheckProgram program) Map.empty)) 0
 
--- -- | Run the type checker on a program.
--- runTypeChecker :: Program -> Either String ()
--- runTypeChecker program = runExceptT (checkProgram program) `evalState` initialTypeEnv
+-- | Type check a program.
+typeCheckProgram :: AbsXyzGrammar.Program -> TypeChecker ()
+typeCheckProgram (AbsXyzGrammar.MyProgram _ stmts) = typeCheckStmts stmts
 
--- -- | Check a program.
--- checkProgram :: Program -> TypeChecker ()
--- checkProgram (MyProgram _ stmts) = do
---   Monad.forM_ stmts checkStmt
+-- | Type check a list of statements.
+typeCheckStmts :: [AbsXyzGrammar.Stmt] -> TypeChecker ()
+typeCheckStmts [] = return ()
+typeCheckStmts (stmt : stmts) = do
+  typeCheckStmt stmt
+  typeCheckStmts stmts
 
--- -- | Check a statement.
--- checkStmt :: Stmt -> TypeChecker ()
--- checkStmt stmt = case stmt of
---   Empty _ -> return ()
---   Decl _ ty items -> do
---     Monad.forM_ items $ \item -> case item of
---       NoInit _ _ -> return ()
---       Init _ _ expr -> do
---         ty' <- checkExpr expr
---         if ty == ty'
---           then return ()
---           else throwError "Type mismatch in initialization."
---   Assign _ _ expr -> do
---     ty <- checkExpr expr
---     if ty == ty
---       then return ()
---       else throwError "Type mismatch in assignment."
---   Ret _ expr -> do
---     ty <- checkExpr expr
---     if ty == ty
---       then return ()
---       else throwError "Type mismatch in return statement."
---   VoidRet _ -> return ()
---   If _ cond block -> do
---     ty <- checkExpr cond
---     if ty == Boolean
---       then checkBlock block
---       else throwError "Type mismatch in if condition."
---   IfElse _ cond block1 block2 -> do
---     ty <- checkExpr cond
---     if ty == Boolean
---       then checkBlock block1 >> checkBlock block2
---       else throwError "Type mismatch in if condition."
---   While _ cond block -> do
---     ty <- checkExpr cond
---     if ty == Boolean
---       then checkBlock block
---       else throwError "Type mismatch in while condition."
---   FunctionDef _ _ _ _ _ -> return ()
---   StmtExp _ expr -> do
---     _ <- checkExpr expr
---     return ()
+-- | Type check a statement.
+typeCheckStmt :: AbsXyzGrammar.Stmt -> TypeChecker ()
+typeCheckStmt (AbsXyzGrammar.Empty _) = return ()
+typeCheckStmt (AbsXyzGrammar.Decl _ t items) = do
+  typeCheckType t
+  typeCheckItems items
+typeCheckStmt (AbsXyzGrammar.Assign _ _ _) = return ()
+typeCheckStmt (AbsXyzGrammar.Ret _ e) = do
+  typeCheckExpr e
+  return ()
+typeCheckStmt (AbsXyzGrammar.VoidRet _) = return ()
+typeCheckStmt (AbsXyzGrammar.If _ e block) = do
+  typeCheckExpr e
+  typeCheckBlock block
+typeCheckStmt (AbsXyzGrammar.IfElse _ e block1 block2) = do
+    typeCheckExpr e
+    typeCheckBlock block1
+    typeCheckBlock block2
+typeCheckStmt (AbsXyzGrammar.While _ e block) = do
+    typeCheckExpr e
+    typeCheckBlock block
+typeCheckStmt (AbsXyzGrammar.FunctionDef _ t i args block) = do
+    typeCheckType t
+    typeCheckArgs args
+    typeCheckBlock block
+typeCheckStmt (AbsXyzGrammar.StmtExp _ e) = do
+    typeCheckExpr e
+    return ()
 
--- -- | Check a block.
--- checkBlock :: Block -> TypeChecker ()
--- checkBlock (StmtBlock _ stmts) = do
---   Monad.forM_ stmts checkStmt
+-- | Type check a list of items.
+typeCheckItems :: [AbsXyzGrammar.Item] -> TypeChecker ()
+typeCheckItems [] = return ()
+typeCheckItems (item : items) = do
+  typeCheckItem item
+  typeCheckItems items
 
--- -- | Check an expression.
--- checkExpr :: Expr -> TypeChecker Type
--- checkExpr expr = case expr of
---   ExpVar _ ident -> do
---     getType ident
---   ExpLitInt _ _ -> return Integer
---   ExpString _ _ -> return String
---   ExpLitTrue _ -> return Boolean
---   ExpLitFalse _ -> return Boolean
---   ExpApp _ ident exprs -> do
---     ty <- getType ident
---     case ty of
---       Function argTy retTy -> do
---         Monad.forM_ (zip argTy exprs) $ \(ty, expr) -> do
---           ty' <- checkExpr expr
---           if ty == ty'
---             then return ()
---             else throwError "Type mismatch in function application."
---         return retTy
---       _ -> throwError "Function expected."
---   ExpNeg _ expr -> do
---     ty <- checkExpr expr
---     if ty == Integer
---       then return Integer
---       else throwError "Type mismatch in negation."
---   ExpNot _ expr -> do
---     ty <- checkExpr expr
---     if ty == Boolean
---       then return Boolean
---       else throwError "Type mismatch in negation."
---   ExpMul _ expr1 expr2 -> checkBinOp expr1 expr2
---   ExpAdd _ expr1 expr2 -> checkBinOp expr1 expr2
---   ExpRel _ expr1 expr2 -> checkBinOp expr1 expr2
---   ExpAnd _ expr1 expr2 -> checkBinOp expr1 expr2
---   ExpOr _ expr1 expr2 -> checkBinOp expr1 expr2
---   ExpLambda _ args ty expr -> do
---     Monad.forM_ args $ \arg -> case arg of
---       ArgVal _ _ _ -> return ()
---       ArgRef _ _ _ -> return ()
---     ty' <- checkExpr expr
---     if ty == ty'
---       then return (Function (Prelude.map argType args) ty)
---       else throwError "Type mismatch in lambda."
+-- | Type check an item.
+typeCheckItem :: AbsXyzGrammar.Item -> TypeChecker ()
+typeCheckItem (AbsXyzGrammar.NoInit _ _) = return ()
+typeCheckItem (AbsXyzGrammar.Init _ _ e) = do
+  typeCheckExpr e
+  return ()
 
--- -- | Check a binary operation.
--- checkBinOp :: Expr -> Expr -> TypeChecker Type
--- checkBinOp expr1 expr2 = do
---   ty1 <- checkExpr expr1
---   ty2 <- checkExpr expr2
---   if ty1 == ty2
---     then return ty1
---     else throwError "Type mismatch in binary operation."
+-- | Type check a block.
+typeCheckBlock :: AbsXyzGrammar.Block -> TypeChecker ()
+typeCheckBlock (AbsXyzGrammar.StmtBlock _ stmts) = typeCheckStmts stmts
 
--- -- | Get the type of a variable.
--- getType :: Ident -> TypeChecker Type
--- getType ident = do
---   env <- get
---   case Map.lookup ident env of
---     Just ty -> return ty
---     Nothing -> throwError "Variable not in scope."
+-- | Type check a list of arguments.
+typeCheckArgs :: [AbsXyzGrammar.Arg] -> TypeChecker ()
+typeCheckArgs [] = return ()
+typeCheckArgs (arg : args) = do
+  typeCheckArg arg
+  typeCheckArgs args
 
--- -- | Add a variable to the type environment.
--- addVar :: Ident -> Type -> TypeChecker ()
--- addVar ident ty = do
---   env <- get
---   put (Map.insert ident ty env)
+-- | Type check an argument.
+typeCheckArg :: AbsXyzGrammar.Arg -> TypeChecker ()
+typeCheckArg (AbsXyzGrammar.ArgVal _ t _) = typeCheckType t
+typeCheckArg (AbsXyzGrammar.ArgRef _ t _) = typeCheckType t
 
--- -- | Add a function to the type environment.
--- addFun :: Ident -> [Type] -> Type -> TypeChecker ()
--- addFun ident argTy retTy = do
---   env <- get
---   put (Map.insert ident (Function argTy retTy) env)
+-- | Type check a type.
+typeCheckType :: AbsXyzGrammar.Type -> TypeChecker ()
+typeCheckType (AbsXyzGrammar.Integer _) = return ()
+typeCheckType (AbsXyzGrammar.String _) = return ()
+typeCheckType (AbsXyzGrammar.Boolean _) = return ()
+typeCheckType (AbsXyzGrammar.Void _) = return ()
+typeCheckType (AbsXyzGrammar.Function _ t ts) = do
+  typeCheckType t
+  typeCheckTypes ts
 
+-- | Type check a list of types.
+typeCheckTypes :: [AbsXyzGrammar.Type] -> TypeChecker ()
+typeCheckTypes [] = return ()
+typeCheckTypes (t : ts) = do
+  typeCheckType t
+  typeCheckTypes ts
 
+-- | Type check an expression.
+typeCheckExpr :: AbsXyzGrammar.Expr -> TypeChecker ()
+typeCheckExpr (AbsXyzGrammar.ExpVar _ _) = return ()
+typeCheckExpr (AbsXyzGrammar.ExpLitInt _ _) = return ()
+typeCheckExpr (AbsXyzGrammar.ExpString _ _) = return ()
+typeCheckExpr (AbsXyzGrammar.ExpLitTrue _) = return ()
+typeCheckExpr (AbsXyzGrammar.ExpLitFalse _) = return ()
+typeCheckExpr (AbsXyzGrammar.ExpApp _ _ es) = do
+  typeCheckExprs es
+  return ()
+typeCheckExpr (AbsXyzGrammar.ExpNeg _ e) = do
+    typeCheckExpr e
+    return ()
+typeCheckExpr (AbsXyzGrammar.ExpNot _ e) = do
+    typeCheckExpr e
+    return ()
+typeCheckExpr (AbsXyzGrammar.ExpMul _ e1 _ e2) = do
+    typeCheckExpr e1
+    typeCheckExpr e2
+    return ()
+typeCheckExpr (AbsXyzGrammar.ExpAdd _ e1 _ e2) = do
+    typeCheckExpr e1
+    typeCheckExpr e2
+    return ()
+typeCheckExpr (AbsXyzGrammar.ExpRel _ e1 _ e2) = do
+    typeCheckExpr e1
+    typeCheckExpr e2
+    return ()
+typeCheckExpr (AbsXyzGrammar.ExpAnd _ e1 e2) = do
+    typeCheckExpr e1
+    typeCheckExpr e2
+    return ()
+typeCheckExpr (AbsXyzGrammar.ExpOr _ e1 e2) = do
+    typeCheckExpr e1
+    typeCheckExpr e2
+    return ()
+typeCheckExpr (AbsXyzGrammar.ExpLambda _ args t b) = do
+    typeCheckArgs args
+    typeCheckType t
+    typeCheckBlock b
+    return ()
+
+-- | Type check a list of expressions.
+typeCheckExprs :: [AbsXyzGrammar.Expr] -> TypeChecker ()
+typeCheckExprs [] = return ()
+typeCheckExprs (e : es) = do
+  typeCheckExpr e
+  typeCheckExprs es

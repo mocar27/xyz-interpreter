@@ -2,35 +2,46 @@
 
 module Interpreter.Interpreter ( run, runFile ) where
 
-import Prelude                     ( ($), (.),
-                                    Either(..), Int, (>),
-                                    String, (++), concat, unlines,
+import Prelude                     ( (.),
+                                    Either(..), (>),
+                                    String, (++),
                                     Show, show, 
-                                    IO, (>>), (>>=), mapM_, putStrLn, print, putStr,
-                                    FilePath, getContents, readFile )
-import ParserLexer.AbsXyzGrammar   ()
-import ParserLexer.LexXyzGrammar   ( Token, mkPosToken )
+                                    IO, (>>), (>>=), mapM_, putStrLn,
+                                    FilePath, readFile )
 import ParserLexer.ParXyzGrammar   ( pProgram, myLexer )
-import ParserLexer.PrintXyzGrammar ( printTree )
-import System.Exit                 ( exitFailure )
+import System.Exit                 ( exitSuccess, exitFailure )
 
--- import TypeChecker.TypeChecker     ( runTypeChecker )
+import TypeChecker.TypeChecker     ( runTypeChecker )
+-- import Evaluator.Evaluator         ( runEvaluator )
 
 runFile :: FilePath -> IO ()
 runFile f = readFile f >>= run
 
--- odpala wszystko
 run :: String -> IO ()
-run s = case prog of      -- nasz warunek ewaluacji, jak sie nie uda pojdzie do Left, jak sie uda to do Right
-    Left err -> do  -- Left -> to znaczy ze sie nie udalo
-      putStrLn "\nParse              Failed...\n"
-      putStrLn "Tokens:"
-      mapM_ (putStrLn . showPosToken . mkPosToken) ts
-      putStrLn err
+run s = case prog of
+    Left err -> do 
+      putStrLn "\nParser failed!\n"
+      putStrLn ("Error message: " ++ err ++ "\n")
       exitFailure
-    Right tree -> do -- Right -> to znaczy ze sie udalo
-      print tree
+    Right tree -> do
+      case runTypeChecker tree of
+        Left err -> do
+          putStrLn "\nTypeChecker failed!\n"
+          putStrLn ("Error message: " ++ err ++ "\n")
+          exitFailure
+        Right _ -> do -- TODO
+          putStrLn "\nType checking successful!\n"
+    --       programResult <- runEvaluator tree 
+    --       case programResult of
+    --         Left err -> do -- error
+    --           putStrLn "\nEvaluator failed!\n"
+    --           putStrLn ("Error message: " ++ err ++ "\n")
+    --           exitFailure
+    --         Right _ -> do -- TODO
+    --           putStrLn "\nEvaluation successful!\n"
+    --           putStrLn "\nProgram result:"
+    --         --   putStrLn . show programResult
+    --           exitSuccess
   where
     ts = myLexer s
     prog = pProgram ts
-    showPosToken ((l,c),t) = concat [ show l, ":", show c, "\t", show t ]
