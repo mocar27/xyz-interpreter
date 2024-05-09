@@ -1,48 +1,21 @@
 module TypeChecker.TypeChecker where
 
+import TypeChecker.Utils
 import ParserLexer.AbsXyzGrammar
+
 import Data.Map                  as Map
 import Data.Functor.Identity     ( Identity, runIdentity )
--- -- import qualified Data.List                 as List
--- -- import qualified Data.Maybe                as Maybe
--- -- import qualified Data.Either               as Either
+
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
+
 import Data.Typeable             (Typeable, typeOf)
 import Control.Exception (throw)
-import Foreign.C (throwErrno)
-
--- | Types
-type TType = Type' ()
-
--- | Environment mapping variable names to types.
-type Env = Map.Map String TType
-initialEnv :: Env
-initialEnv = Map.empty
-
--- Function to add a variable to the global environment.
-addVariables :: [Item] -> TType -> TypeChecker ()
-addVariables [] _ = return ()
-addVariables ((Init p v e) : items) t = do
-  let variableName = getVarFromIdent v
-  modify (Map.insert variableName t)
-  addVariables items t
-
--- | The type of the type checker.
-type TypeChecker a = StateT Env (ExceptT String Identity) a
 
 -- | Run the type checker.
 runTypeChecker :: Program -> Either String ()
--- runTypeChecker program = runIdentity . (runExceptT . (`evalStateT` initialEnv)) . typeCheckProgram
 runTypeChecker program = runIdentity . runExceptT . (`evalStateT` initialEnv) $ typeCheckProgram program
-
--- -- | The type of the type checker.
--- type TypeChecker a = ReaderT Env (ExceptT String (State Int)) a
-
--- -- | Run the type checker.
--- runTypeChecker :: Program -> Either String ()
--- runTypeChecker program = evalState (runExceptT (runReaderT (typeCheckProgram program) initialEnv)) 0
 
 -- | Type check a program.
 typeCheckProgram :: Program -> TypeChecker ()
@@ -61,20 +34,19 @@ typeCheckStmts (stmt : stmts) = do
 
 -- | Type check a statement.
 typeCheckStmt :: Stmt -> TypeChecker ()
+
 typeCheckStmt (Empty _) = return ()
+
 typeCheckStmt (Decl _ t items) = do
   let declType = omitPosition t
   typeCheckItems declType items
-  -- modify (\env -> Map.insert variableName eT env)
   addVariables items declType
-  -- mapM_ (\(Init _ var e) -> addVariable (getVarFromIdent var) declType) items
 
 typeCheckStmt (Assign i v e) = do
-  throwError $ "Error: " ++ show (typeOf e)
-  -- expectedType <- getVarFromIdent v
-  -- throwError $ "Error: " ++ show expectedType
-  -- actualType <- typeCheckExpr e
-  -- unless (actualType == expectedType) $ throwError $ "Type mismatch: " ++ show actualType ++ " cannot be assigned to " ++ show expectedType
+  expectedType <- getVarFromEnv v
+  actualType <- typeCheckExpr e
+  unless (actualType == expectedType) $ throwError $ "Type mismatch: Attempt to assign type: " ++ show actualType ++ " to type: " ++ show expectedType
+  
 typeCheckStmt (Ret _ e) = do
   typeCheckExpr e
   return ()
@@ -189,21 +161,3 @@ typeCheckExpr (ExpLambda _ args t b) = do
     -- omitPosition t
     typeCheckBlock b
     return $ Integer ()
-
--- | Get the type of a variable from the environment.
-getVarFromEnv :: Ident -> TypeChecker TType
-getVarFromEnv (Ident var) = do
-  env <- get
-  case Map.lookup var env of
-    Just t  -> return t
-    Nothing -> throwError $ "Variable " ++ var ++ " not declared"
-
-getVarFromIdent :: Ident -> String
-getVarFromIdent (Ident var) = var
-
-omitPosition :: Type' a -> TType
-omitPosition (Integer _) = Integer ()
-omitPosition (String _) = String ()
-omitPosition (Boolean _) = Boolean ()
-omitPosition (Void _) = Void ()
-omitPosition (Function _ retType argTypes) = Function () (omitPosition retType) (fmap omitPosition argTypes)
