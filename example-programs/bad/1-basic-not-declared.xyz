@@ -2,4 +2,5 @@ Integer function main() {
 
     String x = "test";
     x;
+    y;
 }

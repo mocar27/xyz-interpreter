@@ -1,0 +1,4 @@
+Integer function main() {
+
+    String x = "test", y = 5;
+}

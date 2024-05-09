@@ -2,16 +2,16 @@ module TypeChecker.TypeChecker where
 
 import ParserLexer.AbsXyzGrammar
 import Data.Map                  as Map
-import Data.Functor.Identity     (Identity)
+import Data.Functor.Identity     ( Identity, runIdentity )
 -- -- import qualified Data.List                 as List
 -- -- import qualified Data.Maybe                as Maybe
 -- -- import qualified Data.Either               as Either
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Typeable             (Typeable, typeOf)
 import Control.Exception (throw)
+import Foreign.C (throwErrno)
 
 -- | Types
 type TType = Type' ()
@@ -22,24 +22,27 @@ initialEnv :: Env
 initialEnv = Map.empty
 
 -- Function to add a variable to the global environment.
-addVariable :: String -> TType -> TypeChecker ()
-addVariable var t = do
-  env <- ask
-  let updatedEnv = Map.insert var t env
-  local (const updatedEnv) (return ())
+addVariables :: [Item] -> TType -> TypeChecker ()
+addVariables [] _ = return ()
+addVariables ((Init p v e) : items) t = do
+  let variableName = getVarFromIdent v
+  modify (Map.insert variableName t)
+  addVariables items t
 
 -- | The type of the type checker.
--- -- | The type of the type checker.
--- type TypeChecker a = ReaderT Env (ExceptT String Identity) a
-
--- -- | Run the type checker.
--- runTypeChecker :: Program -> Either String ()
--- runTypeChecker program = runIdentity . (runExceptT . (`evalStateT` initialEnv)) . typeCheckProgram
-type TypeChecker a = ReaderT Env (ExceptT String (State Int)) a
+type TypeChecker a = StateT Env (ExceptT String Identity) a
 
 -- | Run the type checker.
 runTypeChecker :: Program -> Either String ()
-runTypeChecker program = evalState (runExceptT (runReaderT (typeCheckProgram program) initialEnv)) 0
+-- runTypeChecker program = runIdentity . (runExceptT . (`evalStateT` initialEnv)) . typeCheckProgram
+runTypeChecker program = runIdentity . runExceptT . (`evalStateT` initialEnv) $ typeCheckProgram program
+
+-- -- | The type of the type checker.
+-- type TypeChecker a = ReaderT Env (ExceptT String (State Int)) a
+
+-- -- | Run the type checker.
+-- runTypeChecker :: Program -> Either String ()
+-- runTypeChecker program = evalState (runExceptT (runReaderT (typeCheckProgram program) initialEnv)) 0
 
 -- | Type check a program.
 typeCheckProgram :: Program -> TypeChecker ()
@@ -62,6 +65,9 @@ typeCheckStmt (Empty _) = return ()
 typeCheckStmt (Decl _ t items) = do
   let declType = omitPosition t
   typeCheckItems declType items
+  -- modify (\env -> Map.insert variableName eT env)
+  addVariables items declType
+  -- mapM_ (\(Init _ var e) -> addVariable (getVarFromIdent var) declType) items
 
 typeCheckStmt (Assign i v e) = do
   throwError $ "Error: " ++ show (typeOf e)
@@ -144,7 +150,7 @@ typeCheckExprs (e : es) = do
 
 -- | Type check an expression.
 typeCheckExpr :: Expr -> TypeChecker TType
-typeCheckExpr (ExpVar _ var) = getTypeFromEnv var
+typeCheckExpr (ExpVar _ var) = getVarFromEnv var
 typeCheckExpr (ExpLitInt _ _) = return $ Integer ()
 typeCheckExpr (ExpString _ _) = return $ String ()
 typeCheckExpr (ExpLitTrue _) = return $ Boolean ()
@@ -185,10 +191,10 @@ typeCheckExpr (ExpLambda _ args t b) = do
     return $ Integer ()
 
 -- | Get the type of a variable from the environment.
-getTypeFromEnv :: Ident -> TypeChecker TType
-getTypeFromEnv (Ident var) = do
-  maybeType <- asks (Map.lookup var)
-  case maybeType of
+getVarFromEnv :: Ident -> TypeChecker TType
+getVarFromEnv (Ident var) = do
+  env <- get
+  case Map.lookup var env of
     Just t  -> return t
     Nothing -> throwError $ "Variable " ++ var ++ " not declared"
 
