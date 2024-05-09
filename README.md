@@ -14,6 +14,10 @@ Hello
 then if it returns success it runs TypeChecker, and if the result is successfull
 it runs the Evaluator. 
 
+## Some nuances
+
+in the if condition we allow to use int, as bool is actually integer 0/1, if Integer is <= 0, it's false, else true
+
 ## Grammar
 
 Hello

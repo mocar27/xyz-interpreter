@@ -1,0 +1,15 @@
+Integer function main() {
+
+    String x = "test", y = "siema";
+    Integer z = 5;
+    Boolean t = true;
+
+    x = y;
+    
+    if (t) {
+        y;
+    } else {
+        z = x;
+        y;
+    }
+}

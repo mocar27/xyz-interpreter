@@ -1,0 +1,11 @@
+Integer function main() {
+
+    String x = "test", y = "siema";
+    Integer z = 5;
+
+    x = y;
+    
+    if (x) {
+        y;
+    }
+}

@@ -34,7 +34,6 @@ typeCheckStmts (stmt : stmts) = do
 
 -- | Type check a statement.
 typeCheckStmt :: Stmt -> TypeChecker ()
-
 typeCheckStmt (Empty _) = return ()
 
 typeCheckStmt (Decl _ t items) = do
@@ -45,29 +44,49 @@ typeCheckStmt (Decl _ t items) = do
 typeCheckStmt (Assign i v e) = do
   expectedType <- getVarFromEnv v
   actualType <- typeCheckExpr e
-  unless (actualType == expectedType) $ throwError $ "Type mismatch: Attempt to assign type: " ++ show actualType ++ " to type: " ++ show expectedType
+  unless (actualType == expectedType) 
+    $ throwError $ "Type mismatch: Attempt to assign type: " ++ show actualType ++ " to type: " ++ show expectedType
   
-typeCheckStmt (Ret _ e) = do
+typeCheckStmt (Ret _ e) = do -- TODO
   typeCheckExpr e
   return ()
-typeCheckStmt (VoidRet _) = return ()
+typeCheckStmt (VoidRet _) = return () -- TODO
+
 typeCheckStmt (If _ e block) = do
-  typeCheckExpr e
+  conditionType <- typeCheckExpr e
+  unless (conditionType == Boolean () || conditionType == Integer ()) 
+    $ throwError $ "If condition is: " ++ show conditionType ++ ", expected was either: Boolean () or Integer ()"
+  env <- get
   typeCheckBlock block
+  put env
+
 typeCheckStmt (IfElse _ e block1 block2) = do
-    typeCheckExpr e
-    typeCheckBlock block1
-    typeCheckBlock block2
+  conditionType <- typeCheckExpr e
+  unless (conditionType == Boolean () || conditionType == Integer ()) 
+    $ throwError $ "If condition is: " ++ show conditionType ++ ", expected was either: Boolean () or Integer ()"
+  env <- get
+  typeCheckBlock block1
+  put env
+  env <- get
+  typeCheckBlock block2
+  put env
+
 typeCheckStmt (While _ e block) = do
-    typeCheckExpr e
-    typeCheckBlock block
-typeCheckStmt (FunctionDef _ t i args block) = do
+  conditionType <- typeCheckExpr e
+  unless (conditionType == Boolean () || conditionType == Integer ()) 
+    $ throwError $ "While condition is: " ++ show conditionType ++ ", expected was either: Boolean () or Integer ()"
+  env <- get
+  typeCheckBlock block
+  put env
+
+typeCheckStmt (FunctionDef _ t i args block) = do -- TODO
     -- let declType = omitPosition t
-    typeCheckArgs args
-    typeCheckBlock block
+  typeCheckArgs args
+  typeCheckBlock block  
+
 typeCheckStmt (StmtExp _ e) = do
-    typeCheckExpr e
-    return ()
+  typeCheckExpr e
+  return ()
 
 -- | Type check a list of items.
 typeCheckItems :: TType -> [Item] -> TypeChecker ()
