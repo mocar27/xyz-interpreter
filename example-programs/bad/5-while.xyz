@@ -2,10 +2,10 @@ Integer function main() {
 
     String x = "test", y = "siema";
     Integer z = 5;
-
+    Boolean t = true;
     x = y;
     
-    while (x) {
-        y;
+    while (t) {
+        z = y;
     }
 }
