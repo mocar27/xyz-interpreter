@@ -44,25 +44,25 @@ typeCheckStmt (Assign i v e) = do
   expectedType <- getVarFromEnv v
   actualType <- typeCheckExpr e
   unless (actualType == expectedType) 
-    $ throwError $ "Type mismatch: Attempt to assign type: " ++ show actualType ++ " to type: " ++ show expectedType
+    $ throwError $ "Type mismatch: attempt to assign type " ++ show actualType ++ " to type " ++ show expectedType
   
-typeCheckStmt (Ret _ e) = do -- TODO
+typeCheckStmt (Ret _ e) = do         -- TODO
   _ <- typeCheckExpr e
   return ()
 typeCheckStmt (VoidRet _) = return () -- TODO
 
 typeCheckStmt (If _ e block) = do
   conditionType <- typeCheckExpr e
-  unless (conditionType == Boolean () || conditionType == Integer ()) 
-    $ throwError $ "If condition is: " ++ show conditionType ++ ", expected was either: Boolean () or Integer ()"
+  unless (conditionType == Boolean ()) 
+    $ throwError $ "If condition is " ++ show conditionType ++ ", expected was either Boolean ()"
   env <- get
   typeCheckBlock block
   put env
 
 typeCheckStmt (IfElse _ e block1 block2) = do
   conditionType <- typeCheckExpr e
-  unless (conditionType == Boolean () || conditionType == Integer ()) 
-    $ throwError $ "If condition is: " ++ show conditionType ++ ", expected was either: Boolean () or Integer ()"
+  unless (conditionType == Boolean ()) 
+    $ throwError $ "If condition is " ++ show conditionType ++ ", expected was either Boolean ()"
   envIf <- get
   typeCheckBlock block1
   put envIf
@@ -72,8 +72,8 @@ typeCheckStmt (IfElse _ e block1 block2) = do
 
 typeCheckStmt (While _ e block) = do
   conditionType <- typeCheckExpr e
-  unless (conditionType == Boolean () || conditionType == Integer ()) 
-    $ throwError $ "While condition is: " ++ show conditionType ++ ", expected was either: Boolean () or Integer ()"
+  unless (conditionType == Boolean ()) 
+    $ throwError $ "While condition is " ++ show conditionType ++ ", expected was either Boolean ()"
   env <- get
   typeCheckBlock block
   put env
@@ -148,36 +148,60 @@ typeCheckExpr (ExpLitInt _ _) = return $ Integer ()
 typeCheckExpr (ExpString _ _) = return $ String ()
 typeCheckExpr (ExpLitTrue _) = return $ Boolean ()
 typeCheckExpr (ExpLitFalse _) = return $ Boolean ()
-typeCheckExpr (ExpApp _ _ es) = do
+
+typeCheckExpr (ExpApp _ _ es) = do  -- TODO (probably getting type of function from Env and comparing to variable it's assigned to)
   typeCheckExprs es
   return $ Integer ()
+
 typeCheckExpr (ExpNeg _ e) = do
-    typeCheckExpr e
-    return $ Integer ()
+  varType <- typeCheckExpr e
+  unless (varType == Integer ()) 
+    $ throwError $ "Negation Error: expected type was Integer (), but got " ++ show varType ++ " instead."
+  return $ Integer ()
+
 typeCheckExpr (ExpNot _ e) = do
-    typeCheckExpr e
-    return $ Integer ()
+  varType <- typeCheckExpr e
+  unless (varType == Boolean ())
+    $ throwError $ "Negation Error: expected type was Boolean (), but got " ++ show varType ++ " instead."
+  return $ Boolean ()
+
 typeCheckExpr (ExpMul _ e1 _ e2) = do
-    typeCheckExpr e1
-    typeCheckExpr e2
-    return $ Integer ()
+  varType1 <- typeCheckExpr e1
+  varType2 <- typeCheckExpr e2
+  unless (varType1 == Integer () && varType2 == Integer ())
+    $ throwError $ "Multiplication Error: expected types were Integer (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
+  return $ Integer ()
+
 typeCheckExpr (ExpAdd _ e1 _ e2) = do
-    typeCheckExpr e1
-    typeCheckExpr e2
-    return $ Integer ()
-typeCheckExpr (ExpRel _ e1 _ e2) = do
-    typeCheckExpr e1
-    typeCheckExpr e2
-    return $ Integer ()
+  varType1 <- typeCheckExpr e1
+  varType2 <- typeCheckExpr e2
+  if varType1 == String () && varType2 == String () then return $ String ()
+  else if varType1 == Integer () && varType2 == Integer () then return $ Integer ()
+  else
+    throwError $ "Addition Error: expected types were either both Integer () or String (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
+
+typeCheckExpr (ExpRel _ e1 op e2) = do
+  varType1 <- typeCheckExpr e1
+  varType2 <- typeCheckExpr e2
+  unless (varType1 == varType2)
+    $ throwError $ "Relational Error: cannot do relation operation on mismatch types: " ++ show varType1 ++ " and " ++ show varType2
+  return $ Boolean ()
+
 typeCheckExpr (ExpAnd _ e1 e2) = do
-    typeCheckExpr e1
-    typeCheckExpr e2
-    return $ Integer ()
+  varType1 <- typeCheckExpr e1
+  varType2 <- typeCheckExpr e2
+  unless (varType1 == Boolean () && varType2 == Boolean ())
+    $ throwError $ "And Error: expected types were Boolean (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
+  return $ Boolean ()
+
 typeCheckExpr (ExpOr _ e1 e2) = do
-    typeCheckExpr e1
-    typeCheckExpr e2
-    return $ Integer ()
-typeCheckExpr (ExpLambda _ args t b) = do
+  varType1 <- typeCheckExpr e1
+  varType2 <- typeCheckExpr e2
+  unless (varType1 == Boolean () && varType2 == Boolean ())
+    $ throwError $ "Or Error: expected types were Boolean (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
+  return $ Boolean ()
+
+typeCheckExpr (ExpLambda _ args t b) = do -- TODO
     typeCheckArgs args
     -- omitPosition t
     typeCheckBlock b

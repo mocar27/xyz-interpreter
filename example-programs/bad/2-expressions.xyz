@@ -10,6 +10,6 @@ Integer function main() {
     Boolean seven7 = true;
     Integer yes, u = 5;
     
-    x = t + f;
+    six < seven;
 
 }

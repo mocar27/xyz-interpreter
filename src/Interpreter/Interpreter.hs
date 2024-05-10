@@ -21,13 +21,13 @@ run :: String -> IO ()
 run s = case prog of
     Left err -> do 
       putStrLn "\nParser failed!\n"
-      putStrLn ("Error message: " ++ err ++ "\n")
+      putStrLn (err ++ "\n")
       exitFailure
     Right tree -> do
       case runTypeChecker tree of
         Left err -> do
           putStrLn "\nTypeChecker failed!\n"
-          putStrLn ("Error message: " ++ err ++ "\n")
+          putStrLn (err ++ "\n")
           exitFailure
         Right _ -> do -- TODO
           putStrLn "\nType checking successful!\n"

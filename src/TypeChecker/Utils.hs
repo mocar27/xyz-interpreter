@@ -40,6 +40,14 @@ getVarFromEnv (Ident var) = do
 getVarFromIdent :: Ident -> String
 getVarFromIdent (Ident var) = var
 
+getOperationType :: RelOp' BNFC'Position -> String
+getOperationType (LThan _) = "<"
+getOperationType (Leq _) = "<="
+getOperationType (GThan _) = ">"
+getOperationType (Geq _) = ">="
+getOperationType (Eq _) = "=="
+getOperationType (NEq _) = "!="
+
 getArgName :: Arg -> String
 getArgName (ArgVal _ _ name) = getVarFromIdent name
 getArgName (ArgRef _ _ name) = getVarFromIdent name
@@ -48,7 +56,7 @@ getArgType :: Arg -> TType
 getArgType (ArgVal _ t _) = omitPosition t
 getArgType (ArgRef _ t _) = omitPosition t
 
-omitPosition :: Type' a -> TType
+omitPosition :: Type' BNFC'Position -> TType
 omitPosition (Integer _) = Integer ()
 omitPosition (String _) = String ()
 omitPosition (Boolean _) = Boolean ()
