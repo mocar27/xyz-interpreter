@@ -1,0 +1,3 @@
+Integer function main(String x, Boolean y, Integer z, Integer x) {
+    String s = "siema";
+}

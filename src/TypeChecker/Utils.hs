@@ -3,7 +3,7 @@ module TypeChecker.Utils where
 import ParserLexer.AbsXyzGrammar
 
 import Data.Map                  as Map
-import Data.Functor.Identity     ( Identity, runIdentity )
+import Data.Functor.Identity     ( Identity )
 
 import Control.Monad.State
 import Control.Monad.Except
@@ -18,12 +18,16 @@ initialEnv :: Env
 initialEnv = Map.empty
 
 -- Function to add a variable to the global environment.
-addVariables :: [Item] -> TType -> TypeChecker ()
-addVariables [] _ = return ()
-addVariables ((Init p v e) : items) t = do
+addVariables :: TType -> [Item] -> TypeChecker ()
+addVariables _ [] = return ()
+addVariables t ((NoInit _ v) : items) = do
   let variableName = getVarFromIdent v
   modify (Map.insert variableName t)
-  addVariables items t
+  addVariables t items
+addVariables t ((Init _ v _) : items) = do
+  let variableName = getVarFromIdent v
+  modify (Map.insert variableName t)
+  addVariables t items
 
 -- | Get the type of a variable from the environment.
 getVarFromEnv :: Ident -> TypeChecker TType
@@ -35,6 +39,14 @@ getVarFromEnv (Ident var) = do
 
 getVarFromIdent :: Ident -> String
 getVarFromIdent (Ident var) = var
+
+getArgName :: Arg -> String
+getArgName (ArgVal _ _ name) = getVarFromIdent name
+getArgName (ArgRef _ _ name) = getVarFromIdent name
+
+getArgType :: Arg -> TType
+getArgType (ArgVal _ t _) = omitPosition t
+getArgType (ArgRef _ t _) = omitPosition t
 
 omitPosition :: Type' a -> TType
 omitPosition (Integer _) = Integer ()

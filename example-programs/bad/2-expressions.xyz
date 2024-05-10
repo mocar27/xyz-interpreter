@@ -12,13 +12,4 @@ Integer function main() {
     
     x = t + f;
 
-    printInt(x);
-    printString(seven);
-    printBoolean(six);
-
-    printString(seven + eight);
-    printBoolean(3 > 4);
-    printBoolean(six && seven7);
-
-    return 0;
 }
