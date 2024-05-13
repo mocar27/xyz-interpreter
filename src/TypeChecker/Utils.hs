@@ -38,11 +38,24 @@ getVarFromEnv :: Ident -> TypeChecker TType
 getVarFromEnv (Ident var) = do
   env <- get
   case Map.lookup var env of
-    Just (RefString _) -> return $ String ()
-    Just (RefInteger _) -> return $ Integer ()
-    Just (RefBoolean _) -> return $ Boolean ()
     Just t  -> return t
     Nothing -> throwError $ "Variable " ++ var ++ " not declared"
+
+getTypeFromRef :: TType -> TType
+getTypeFromRef (RefString _) = String ()
+getTypeFromRef (RefInteger _) = Integer ()
+getTypeFromRef (RefBoolean _) = Boolean ()
+getTypeFromRef t = getTypeFromType t
+
+getTypeFromType :: TType -> TType
+getTypeFromType (RefString _) = String ()
+getTypeFromType (RefInteger _) = Integer ()
+getTypeFromType (RefBoolean _) = Boolean ()
+getTypeFromType (Integer _) = Integer ()
+getTypeFromType (String _) = String ()
+getTypeFromType (Boolean _) = Boolean ()
+getTypeFromType (Function _ retType argTypes) = Function () (getTypeFromType retType) (fmap getTypeFromRef argTypes)
+getTypeFromType t = t
 
 getNameFromIdent :: Ident -> String
 getNameFromIdent (Ident var) = var

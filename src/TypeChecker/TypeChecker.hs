@@ -53,8 +53,9 @@ typeCheckStmt (Decl _ t items) = do
 
 typeCheckStmt (Assign i v e) = do
   expectedType <- getVarFromEnv v
+  let varFromRef = getTypeFromRef expectedType 
   actualType <- typeCheckExpr e
-  unless (actualType == expectedType)
+  unless (actualType == expectedType || actualType == varFromRef)
     $ throwError $ "Type mismatch: attempt to assign type " ++ show actualType ++ " to type " ++ show expectedType
 
 typeCheckStmt (If _ e block) = do
@@ -215,7 +216,7 @@ typeCheckExpr (ExpOr _ e1 e2) = do
   return $ Boolean ()
 
 typeCheckExpr (ExpLambda _ args t b) = do -- TODO
-    typeCheckArgs args
-    let funType = omitPosition t
-    typeCheckFunctionBlock funType b
-    return $ Integer ()
+  typeCheckArgs args
+  let funType = omitPosition t
+  typeCheckFunctionBlock funType b
+  return $ Integer ()
