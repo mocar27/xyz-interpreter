@@ -14,9 +14,9 @@ Hello
 then if it returns success it runs TypeChecker, and if the result is successfull
 it runs the Evaluator. 
 
-## Some nuances
+## Some nuances / changes to initial grammar
 
-
+It is not permitted to create Void function. Function must have a type and must return something.
 
 ## Grammar
 

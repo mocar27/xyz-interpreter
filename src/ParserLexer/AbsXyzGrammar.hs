@@ -6,9 +6,9 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternSynonyms #-}
 
-module ParserLexer.AbsXyzGrammar where
-
 -- | The abstract syntax of language xyz-grammar.
+
+module ParserLexer.AbsXyzGrammar where
 
 import Prelude (Integer, String)
 import qualified Prelude as C
@@ -34,26 +34,34 @@ type Block = Block' BNFC'Position
 data Block' a = StmtBlock a [Stmt' a]
   deriving (C.Eq, C.Ord, C.Show, C.Read, C.Functor, C.Foldable, C.Traversable)
 
+type FunBlock = FunBlock' BNFC'Position
+data FunBlock' a = FnBlock a [Stmt' a] (Rtrn' a)
+  deriving (C.Eq, C.Ord, C.Show, C.Read, C.Functor, C.Foldable, C.Traversable)
+
 type Stmt = Stmt' BNFC'Position
 data Stmt' a
     = Empty a
     | Decl a (Type' a) [Item' a]
     | Assign a Ident (Expr' a)
-    | Ret a (Expr' a)
-    | VoidRet a
     | If a (Expr' a) (Block' a)
     | IfElse a (Expr' a) (Block' a) (Block' a)
     | While a (Expr' a) (Block' a)
-    | FunctionDef a (Type' a) Ident [Arg' a] (Block' a)
+    | FunctionDef a (Type' a) Ident [Arg' a] (FunBlock' a)
     | StmtExp a (Expr' a)
+  deriving (C.Eq, C.Ord, C.Show, C.Read, C.Functor, C.Foldable, C.Traversable)
+
+type Rtrn = Rtrn' BNFC'Position
+data Rtrn' a = Ret a (Expr' a)
   deriving (C.Eq, C.Ord, C.Show, C.Read, C.Functor, C.Foldable, C.Traversable)
 
 type Type = Type' BNFC'Position
 data Type' a
-    = Integer a
-    | String a
-    | Boolean a
-    | Void a
+    = Integer a 
+    | String a 
+    | Boolean a 
+    | RefInteger a
+    | RefString a
+    | RefBoolean a
     | Function a (Type' a) [Type' a]
   deriving (C.Eq, C.Ord, C.Show, C.Read, C.Functor, C.Foldable, C.Traversable)
 
@@ -72,7 +80,7 @@ data Expr' a
     | ExpRel a (Expr' a) (RelOp' a) (Expr' a)
     | ExpAnd a (Expr' a) (Expr' a)
     | ExpOr a (Expr' a) (Expr' a)
-    | ExpLambda a [Arg' a] (Type' a) (Block' a)
+    | ExpLambda a [Arg' a] (Type' a) (FunBlock' a)
   deriving (C.Eq, C.Ord, C.Show, C.Read, C.Functor, C.Foldable, C.Traversable)
 
 type AddOp = AddOp' BNFC'Position
@@ -123,25 +131,33 @@ instance HasPosition Block where
   hasPosition = \case
     StmtBlock p _ -> p
 
+instance HasPosition FunBlock where
+  hasPosition = \case
+    FnBlock p _ _ -> p
+
 instance HasPosition Stmt where
   hasPosition = \case
     Empty p -> p
     Decl p _ _ -> p
     Assign p _ _ -> p
-    Ret p _ -> p
-    VoidRet p -> p
     If p _ _ -> p
     IfElse p _ _ _ -> p
     While p _ _ -> p
     FunctionDef p _ _ _ _ -> p
     StmtExp p _ -> p
 
+instance HasPosition Rtrn where
+  hasPosition = \case
+    Ret p _ -> p
+
 instance HasPosition Type where
   hasPosition = \case
     Integer p -> p
     String p -> p
     Boolean p -> p
-    Void p -> p
+    RefInteger p -> p
+    RefString p -> p
+    RefBoolean p -> p
     Function p _ _ -> p
 
 instance HasPosition Expr where

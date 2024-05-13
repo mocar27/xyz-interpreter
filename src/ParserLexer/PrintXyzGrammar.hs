@@ -171,18 +171,24 @@ instance Print (AbsXyzGrammar.Block' a) where
   prt i = \case
     AbsXyzGrammar.StmtBlock _ stmts -> prPrec i 0 (concatD [doc (showString "{"), prt 0 stmts, doc (showString "}")])
 
+instance Print (AbsXyzGrammar.FunBlock' a) where
+  prt i = \case
+    AbsXyzGrammar.FnBlock _ stmts rtrn -> prPrec i 0 (concatD [doc (showString "{"), prt 0 stmts, prt 0 rtrn, doc (showString "}")])
+
 instance Print (AbsXyzGrammar.Stmt' a) where
   prt i = \case
     AbsXyzGrammar.Empty _ -> prPrec i 0 (concatD [doc (showString ";")])
     AbsXyzGrammar.Decl _ type_ items -> prPrec i 0 (concatD [prt 0 type_, prt 0 items, doc (showString ";")])
     AbsXyzGrammar.Assign _ id_ expr -> prPrec i 0 (concatD [prt 0 id_, doc (showString "="), prt 0 expr, doc (showString ";")])
-    AbsXyzGrammar.Ret _ expr -> prPrec i 0 (concatD [doc (showString "return"), prt 0 expr, doc (showString ";")])
-    AbsXyzGrammar.VoidRet _ -> prPrec i 0 (concatD [doc (showString "return"), doc (showString ";")])
     AbsXyzGrammar.If _ expr block -> prPrec i 0 (concatD [doc (showString "if"), doc (showString "("), prt 0 expr, doc (showString ")"), prt 0 block])
     AbsXyzGrammar.IfElse _ expr block1 block2 -> prPrec i 0 (concatD [doc (showString "if"), doc (showString "("), prt 0 expr, doc (showString ")"), prt 0 block1, doc (showString "else"), prt 0 block2])
     AbsXyzGrammar.While _ expr block -> prPrec i 0 (concatD [doc (showString "while"), doc (showString "("), prt 0 expr, doc (showString ")"), prt 0 block])
-    AbsXyzGrammar.FunctionDef _ type_ id_ args block -> prPrec i 0 (concatD [prt 0 type_, doc (showString "function"), prt 0 id_, doc (showString "("), prt 0 args, doc (showString ")"), prt 0 block])
+    AbsXyzGrammar.FunctionDef _ type_ id_ args funblock -> prPrec i 0 (concatD [prt 0 type_, doc (showString "function"), prt 0 id_, doc (showString "("), prt 0 args, doc (showString ")"), prt 0 funblock])
     AbsXyzGrammar.StmtExp _ expr -> prPrec i 0 (concatD [prt 0 expr, doc (showString ";")])
+
+instance Print (AbsXyzGrammar.Rtrn' a) where
+  prt i = \case
+    AbsXyzGrammar.Ret _ expr -> prPrec i 0 (concatD [doc (showString "return"), prt 0 expr, doc (showString ";")])
 
 instance Print [AbsXyzGrammar.Type' a] where
   prt _ [] = concatD []
@@ -194,7 +200,9 @@ instance Print (AbsXyzGrammar.Type' a) where
     AbsXyzGrammar.Integer _ -> prPrec i 0 (concatD [doc (showString "Integer")])
     AbsXyzGrammar.String _ -> prPrec i 0 (concatD [doc (showString "String")])
     AbsXyzGrammar.Boolean _ -> prPrec i 0 (concatD [doc (showString "Boolean")])
-    AbsXyzGrammar.Void _ -> prPrec i 0 (concatD [doc (showString "Void")])
+    AbsXyzGrammar.RefInteger _ -> prPrec i 0 (concatD [doc (showString "RefInteger")])
+    AbsXyzGrammar.RefString _ -> prPrec i 0 (concatD [doc (showString "RefString")])
+    AbsXyzGrammar.RefBoolean _ -> prPrec i 0 (concatD [doc (showString "RefBoolean")])
     AbsXyzGrammar.Function _ type_ types -> prPrec i 0 (concatD [prt 0 type_, doc (showString "("), prt 0 types, doc (showString ")")])
 
 instance Print [AbsXyzGrammar.Expr' a] where
@@ -217,7 +225,7 @@ instance Print (AbsXyzGrammar.Expr' a) where
     AbsXyzGrammar.ExpRel _ expr1 relop expr2 -> prPrec i 2 (concatD [prt 2 expr1, prt 0 relop, prt 3 expr2])
     AbsXyzGrammar.ExpAnd _ expr1 expr2 -> prPrec i 1 (concatD [prt 2 expr1, doc (showString "&&"), prt 1 expr2])
     AbsXyzGrammar.ExpOr _ expr1 expr2 -> prPrec i 0 (concatD [prt 1 expr1, doc (showString "||"), prt 0 expr2])
-    AbsXyzGrammar.ExpLambda _ args type_ block -> prPrec i 0 (concatD [doc (showString "("), prt 0 args, doc (showString ")"), doc (showString "=>"), prt 0 type_, prt 0 block])
+    AbsXyzGrammar.ExpLambda _ args type_ funblock -> prPrec i 0 (concatD [doc (showString "("), prt 0 args, doc (showString ")"), doc (showString "=>"), prt 0 type_, prt 0 funblock])
 
 instance Print (AbsXyzGrammar.AddOp' a) where
   prt i = \case

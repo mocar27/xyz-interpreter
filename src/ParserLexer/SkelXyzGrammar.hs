@@ -37,25 +37,33 @@ transBlock :: Show a => AbsXyzGrammar.Block' a -> Result
 transBlock x = case x of
   AbsXyzGrammar.StmtBlock _ stmts -> failure x
 
+transFunBlock :: Show a => AbsXyzGrammar.FunBlock' a -> Result
+transFunBlock x = case x of
+  AbsXyzGrammar.FnBlock _ stmts rtrn -> failure x
+
 transStmt :: Show a => AbsXyzGrammar.Stmt' a -> Result
 transStmt x = case x of
   AbsXyzGrammar.Empty _ -> failure x
   AbsXyzGrammar.Decl _ type_ items -> failure x
   AbsXyzGrammar.Assign _ ident expr -> failure x
-  AbsXyzGrammar.Ret _ expr -> failure x
-  AbsXyzGrammar.VoidRet _ -> failure x
   AbsXyzGrammar.If _ expr block -> failure x
   AbsXyzGrammar.IfElse _ expr block1 block2 -> failure x
   AbsXyzGrammar.While _ expr block -> failure x
-  AbsXyzGrammar.FunctionDef _ type_ ident args block -> failure x
+  AbsXyzGrammar.FunctionDef _ type_ ident args funblock -> failure x
   AbsXyzGrammar.StmtExp _ expr -> failure x
+
+transRtrn :: Show a => AbsXyzGrammar.Rtrn' a -> Result
+transRtrn x = case x of
+  AbsXyzGrammar.Ret _ expr -> failure x
 
 transType :: Show a => AbsXyzGrammar.Type' a -> Result
 transType x = case x of
   AbsXyzGrammar.Integer _ -> failure x
   AbsXyzGrammar.String _ -> failure x
   AbsXyzGrammar.Boolean _ -> failure x
-  AbsXyzGrammar.Void _ -> failure x
+  AbsXyzGrammar.RefInteger _ -> failure x
+  AbsXyzGrammar.RefString _ -> failure x
+  AbsXyzGrammar.RefBoolean _ -> failure x
   AbsXyzGrammar.Function _ type_ types -> failure x
 
 transExpr :: Show a => AbsXyzGrammar.Expr' a -> Result
@@ -73,7 +81,7 @@ transExpr x = case x of
   AbsXyzGrammar.ExpRel _ expr1 relop expr2 -> failure x
   AbsXyzGrammar.ExpAnd _ expr1 expr2 -> failure x
   AbsXyzGrammar.ExpOr _ expr1 expr2 -> failure x
-  AbsXyzGrammar.ExpLambda _ args type_ block -> failure x
+  AbsXyzGrammar.ExpLambda _ args type_ funblock -> failure x
 
 transAddOp :: Show a => AbsXyzGrammar.AddOp' a -> Result
 transAddOp x = case x of

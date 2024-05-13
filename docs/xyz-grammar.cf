@@ -22,15 +22,15 @@ separator    Stmt "" ;
 
 StmtBlock.   Block ::= "{" [Stmt] "}" ;
 
+FnBlock.     FunBlock ::= "{" [Stmt] Rtrn "}" ;
+
 Empty.       Stmt ::= ";" ;
 
 Decl.        Stmt ::= Type [Item] ";" ;
 
 Assign.      Stmt ::= Ident "=" Expr  ";" ;
 
-Ret.         Stmt ::= "return" Expr ";" ;
-
-VoidRet.     Stmt ::= "return" ";" ;
+Ret.         Rtrn ::= "return" Expr ";" ;
 
 If.          Stmt ::= "if" "(" Expr ")" Block  ;
 
@@ -38,7 +38,7 @@ IfElse.      Stmt ::= "if" "(" Expr ")" Block "else" Block  ;
 
 While.       Stmt ::= "while" "(" Expr ")" Block ;
 
-FunctionDef. Stmt ::= Type "function" Ident "(" [Arg] ")" Block ;
+FunctionDef. Stmt ::= Type "function" Ident "(" [Arg] ")" FunBlock ;
 
 StmtExp.     Stmt ::= Expr  ";" ;
 
@@ -51,8 +51,6 @@ Integer.     Type ::= "Integer" ;
 String.      Type ::= "String" ;
 
 Boolean.     Type ::= "Boolean" ;
-
-Void.        Type ::= "Void" ;
 
 Function.    Type ::= Type "(" [Type] ")" ;
 
@@ -86,7 +84,7 @@ ExpAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
 
 ExpOr.       Expr ::= Expr1 "||" Expr ;
 
-ExpLambda.   Expr ::= "(" [Arg] ")" "=>" Type Block ; 
+ExpLambda.   Expr ::= "(" [Arg] ")" "=>" Type FunBlock ; 
 
 coercions    Expr 6 ;
 
