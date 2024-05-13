@@ -3,16 +3,12 @@ module TypeChecker.TypeChecker where
 import TypeChecker.Utils
 import ParserLexer.AbsXyzGrammar
 
-import Prelude                  hiding ( foldr )
-
 import Data.Map                  as Map
 import Data.Functor.Identity     ( runIdentity )
 
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
-
-import Data.Typeable             (Typeable, typeOf)
 
 -- | Run the type checker.
 runTypeChecker :: Program -> Either String ()
@@ -27,17 +23,17 @@ typeCheckBlock :: Block -> TypeChecker ()
 typeCheckBlock (StmtBlock _ stmts) = typeCheckStmts stmts
 
 -- | Type check a function block.
-typeCheckFunctionBlock :: TType -> FunBlock -> TypeChecker ()  -- TODO
+typeCheckFunctionBlock :: TType -> FunBlock -> TypeChecker ()
 typeCheckFunctionBlock t (FnBlock _ stmts rtrn) = do
-  env <- get
   typeCheckStmts stmts
-  put env
+  typeCheckReturn t rtrn
 
 -- | Type check a return statement.
-typeCheckReturn :: Rtrn -> TypeChecker () -- TODO
-typeCheckReturn (Ret _ e) = do
-  _ <- typeCheckExpr e
-  return ()
+typeCheckReturn :: TType -> Rtrn -> TypeChecker ()
+typeCheckReturn t (Ret _ e) = do
+  rtrnType <- typeCheckExpr e
+  unless (rtrnType == t)
+    $ throwError $ "Return type mismatch: Function is type " ++ show t ++ ", but return is type " ++ show rtrnType
 
 -- | Type check a list of statements.
 typeCheckStmts :: [Stmt] -> TypeChecker ()
@@ -58,12 +54,12 @@ typeCheckStmt (Decl _ t items) = do
 typeCheckStmt (Assign i v e) = do
   expectedType <- getVarFromEnv v
   actualType <- typeCheckExpr e
-  unless (actualType == expectedType) 
+  unless (actualType == expectedType)
     $ throwError $ "Type mismatch: attempt to assign type " ++ show actualType ++ " to type " ++ show expectedType
 
 typeCheckStmt (If _ e block) = do
   conditionType <- typeCheckExpr e
-  unless (conditionType == Boolean ()) 
+  unless (conditionType == Boolean ())
     $ throwError $ "If condition is " ++ show conditionType ++ ", expected was either Boolean ()"
   env <- get
   typeCheckBlock block
@@ -71,7 +67,7 @@ typeCheckStmt (If _ e block) = do
 
 typeCheckStmt (IfElse _ e block1 block2) = do
   conditionType <- typeCheckExpr e
-  unless (conditionType == Boolean ()) 
+  unless (conditionType == Boolean ())
     $ throwError $ "If condition is " ++ show conditionType ++ ", expected was either Boolean ()"
   envIf <- get
   typeCheckBlock block1
@@ -82,19 +78,21 @@ typeCheckStmt (IfElse _ e block1 block2) = do
 
 typeCheckStmt (While _ e block) = do
   conditionType <- typeCheckExpr e
-  unless (conditionType == Boolean ()) 
+  unless (conditionType == Boolean ())
     $ throwError $ "While condition is " ++ show conditionType ++ ", expected was either Boolean ()"
   env <- get
   typeCheckBlock block
   put env
 
-typeCheckStmt (FunctionDef _ t i args block) = do -- TODO (If function is not in Env, but passes type check, add it to Env)
+typeCheckStmt (FunctionDef _ t i args block) = do
   let functionType = omitPosition t
-  addFunction i functionType args
-  -- typeCheckArgs args
+  env <- get
+  forM_ args $ \a -> case a of
+    ArgVal _ t _ -> modify (Map.insert (getArgName a) (omitPosition t))
+    ArgRef _ t _ -> modify (Map.insert (getArgName a) (omitPositionRef t))
   typeCheckFunctionBlock functionType block
-  -- modify (\env -> foldr (\arg env' -> Map.insert (getArgName arg) (getArgType arg) env') env args)
-  -- withStateT (\env -> foldr (\arg env' -> Map.insert (getArgName arg) (getArgType arg) env') env args) (typeCheckFunctionBlock functionType block)
+  put env
+  addFunction i functionType args
 
 typeCheckStmt (StmtExp _ e) = do
   _ <- typeCheckExpr e
@@ -105,7 +103,7 @@ typeCheckItems :: TType -> [Item] -> TypeChecker ()
 typeCheckItems _ [] = return ()
 typeCheckItems eT (item : items) = do
   typeCheckItem eT item
-  typeCheckItems eT items 
+  typeCheckItems eT items
 
 -- | Type check an item.
 typeCheckItem :: TType -> Item -> TypeChecker ()
@@ -113,7 +111,7 @@ typeCheckItem _ (NoInit _ _) = return ()
 typeCheckItem eT (Init p var e) = do
   let variableName = getNameFromIdent var
   actualType <- typeCheckExpr e
-  unless (actualType == eT) 
+  unless (actualType == eT)
     $ throwError $ "Type mismatch variable " ++ show variableName ++ ": " ++ show actualType ++ " cannot be assigned to " ++ show eT
 
 -- | Type check a list of arguments.
@@ -125,9 +123,9 @@ typeCheckArgs (arg : args) = do
 
 -- | Type check an argument.
 typeCheckArg :: Arg -> TypeChecker ()     -- TODO
-typeCheckArg (ArgVal _ t _) = do 
+typeCheckArg (ArgVal _ t _) = do
   typeCheckType t
-typeCheckArg (ArgRef _ t _) = do 
+typeCheckArg (ArgRef _ t _) = do
   typeCheckType t
 
 -- | Type check a list of types.          -- TODO
@@ -170,7 +168,7 @@ typeCheckExpr (ExpApp _ _ es) = do  -- TODO (probably getting type of function f
 
 typeCheckExpr (ExpNeg _ e) = do
   varType <- typeCheckExpr e
-  unless (varType == Integer ()) 
+  unless (varType == Integer ())
     $ throwError $ "Negation Error: expected type was Integer (), but got " ++ show varType ++ " instead."
   return $ Integer ()
 

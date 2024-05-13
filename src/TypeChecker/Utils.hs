@@ -34,11 +34,13 @@ addFunction (Ident name) retType args = do
   let argTypes = fmap getArgType args
   modify (Map.insert name (Function () retType argTypes))
 
--- | Get the type of a variable from the environment.
 getVarFromEnv :: Ident -> TypeChecker TType
 getVarFromEnv (Ident var) = do
   env <- get
   case Map.lookup var env of
+    Just (RefString _) -> return $ String ()
+    Just (RefInteger _) -> return $ Integer ()
+    Just (RefBoolean _) -> return $ Boolean ()
     Just t  -> return t
     Nothing -> throwError $ "Variable " ++ var ++ " not declared"
 
