@@ -15,4 +15,6 @@ Void function main() {
     else {
         printInt(x * x);
     }
+
+    return 0;
 }

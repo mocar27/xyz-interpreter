@@ -1,3 +1,14 @@
-Integer function main(String x, Boolean y, Integer z, Integer x) {
+Integer function test(var String x, Boolean y, Integer z) {
     String s = "siema";
+    x = "test";
+    y = true;
+    z = 5;
+
+    return 0;
+}
+
+Integer function main() {
+    String s = "siema";
+
+    return 0;
 }

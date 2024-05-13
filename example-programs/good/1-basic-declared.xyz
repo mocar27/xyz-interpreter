@@ -6,4 +6,6 @@ Integer function main() {
     x;
     y;
     z;
+
+    return 0;
 }

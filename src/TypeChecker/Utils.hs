@@ -21,13 +21,18 @@ initialEnv = Map.empty
 addVariables :: TType -> [Item] -> TypeChecker ()
 addVariables _ [] = return ()
 addVariables t ((NoInit _ v) : items) = do
-  let variableName = getVarFromIdent v
+  let variableName = getNameFromIdent v
   modify (Map.insert variableName t)
   addVariables t items
 addVariables t ((Init _ v _) : items) = do
-  let variableName = getVarFromIdent v
+  let variableName = getNameFromIdent v
   modify (Map.insert variableName t)
   addVariables t items
+
+addFunction :: Ident -> TType -> [Arg] -> TypeChecker ()
+addFunction (Ident name) retType args = do
+  let argTypes = fmap getArgType args
+  modify (Map.insert name (Function () retType argTypes))
 
 -- | Get the type of a variable from the environment.
 getVarFromEnv :: Ident -> TypeChecker TType
@@ -37,8 +42,8 @@ getVarFromEnv (Ident var) = do
     Just t  -> return t
     Nothing -> throwError $ "Variable " ++ var ++ " not declared"
 
-getVarFromIdent :: Ident -> String
-getVarFromIdent (Ident var) = var
+getNameFromIdent :: Ident -> String
+getNameFromIdent (Ident var) = var
 
 getOperationType :: RelOp' BNFC'Position -> String
 getOperationType (LThan _) = "<"
@@ -49,16 +54,47 @@ getOperationType (Eq _) = "=="
 getOperationType (NEq _) = "!="
 
 getArgName :: Arg -> String
-getArgName (ArgVal _ _ name) = getVarFromIdent name
-getArgName (ArgRef _ _ name) = getVarFromIdent name
+getArgName (ArgVal _ _ name) = getNameFromIdent name
+getArgName (ArgRef _ _ name) = getNameFromIdent name
 
 getArgType :: Arg -> TType
 getArgType (ArgVal _ t _) = omitPosition t
-getArgType (ArgRef _ t _) = omitPosition t
+getArgType (ArgRef _ t _) = omitPositionRef t
+
+getFunctionFromEnv :: Ident -> TypeChecker TType
+getFunctionFromEnv (Ident name) = do
+  env <- get
+  case Map.lookup name env of
+    Just t  -> return t
+    Nothing -> throwError $ "Function with name " ++ name ++ " not declared"
+
+getFunctionRetTypeFromEnv :: Ident -> TypeChecker TType
+getFunctionRetTypeFromEnv (Ident name) = do
+  env <- get
+  case Map.lookup name env of
+    Just (Function _ retType _) -> return retType
+    Just _ -> throwError $ "Variable with name " ++ name ++ " is not a function"
+    Nothing -> throwError $ "Function with name " ++ name ++ " not declared"
+
+getFunctionArgTypesFromEnv :: Ident -> TypeChecker [TType]
+getFunctionArgTypesFromEnv (Ident name) = do
+  env <- get
+  case Map.lookup name env of
+    Just (Function _ _ argTypes) -> return argTypes
+    Just _ -> throwError $ "Variable with name " ++ name ++ " is not a function"
+    Nothing -> throwError $ "Function with name " ++ name ++ " not declared"
+
+omitPositionRef :: Type' BNFC'Position -> TType
+omitPositionRef (Integer _) = RefInteger ()
+omitPositionRef (String _) = RefString ()
+omitPositionRef (Boolean _) = RefBoolean ()
+omitPositionRef t = omitPosition t
 
 omitPosition :: Type' BNFC'Position -> TType
 omitPosition (Integer _) = Integer ()
 omitPosition (String _) = String ()
 omitPosition (Boolean _) = Boolean ()
-omitPosition (Void _) = Void ()
-omitPosition (Function _ retType argTypes) = Function () (omitPosition retType) (fmap omitPosition argTypes)
+omitPosition (RefInteger _) = RefInteger ()
+omitPosition (RefString _) = RefString ()
+omitPosition (RefBoolean _) = RefBoolean ()
+omitPosition (Function _ retType argTypes) = Function () (omitPosition retType) (fmap omitPositionRef argTypes)

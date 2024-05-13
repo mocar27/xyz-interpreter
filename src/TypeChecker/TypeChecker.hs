@@ -3,6 +3,8 @@ module TypeChecker.TypeChecker where
 import TypeChecker.Utils
 import ParserLexer.AbsXyzGrammar
 
+import Prelude                  hiding ( foldr )
+
 import Data.Map                  as Map
 import Data.Functor.Identity     ( runIdentity )
 
@@ -23,6 +25,19 @@ typeCheckProgram (MyProgram _ stmts) = typeCheckStmts stmts
 -- | Type check a block.
 typeCheckBlock :: Block -> TypeChecker ()
 typeCheckBlock (StmtBlock _ stmts) = typeCheckStmts stmts
+
+-- | Type check a function block.
+typeCheckFunctionBlock :: TType -> FunBlock -> TypeChecker ()  -- TODO
+typeCheckFunctionBlock t (FnBlock _ stmts rtrn) = do
+  env <- get
+  typeCheckStmts stmts
+  put env
+
+-- | Type check a return statement.
+typeCheckReturn :: Rtrn -> TypeChecker () -- TODO
+typeCheckReturn (Ret _ e) = do
+  _ <- typeCheckExpr e
+  return ()
 
 -- | Type check a list of statements.
 typeCheckStmts :: [Stmt] -> TypeChecker ()
@@ -45,11 +60,6 @@ typeCheckStmt (Assign i v e) = do
   actualType <- typeCheckExpr e
   unless (actualType == expectedType) 
     $ throwError $ "Type mismatch: attempt to assign type " ++ show actualType ++ " to type " ++ show expectedType
-  
-typeCheckStmt (Ret _ e) = do         -- TODO
-  _ <- typeCheckExpr e
-  return ()
-typeCheckStmt (VoidRet _) = return () -- TODO
 
 typeCheckStmt (If _ e block) = do
   conditionType <- typeCheckExpr e
@@ -79,9 +89,12 @@ typeCheckStmt (While _ e block) = do
   put env
 
 typeCheckStmt (FunctionDef _ t i args block) = do -- TODO (If function is not in Env, but passes type check, add it to Env)
-    -- let declType = omitPosition t
-  typeCheckArgs args
-  typeCheckBlock block  
+  let functionType = omitPosition t
+  addFunction i functionType args
+  -- typeCheckArgs args
+  typeCheckFunctionBlock functionType block
+  -- modify (\env -> foldr (\arg env' -> Map.insert (getArgName arg) (getArgType arg) env') env args)
+  -- withStateT (\env -> foldr (\arg env' -> Map.insert (getArgName arg) (getArgType arg) env') env args) (typeCheckFunctionBlock functionType block)
 
 typeCheckStmt (StmtExp _ e) = do
   _ <- typeCheckExpr e
@@ -92,13 +105,13 @@ typeCheckItems :: TType -> [Item] -> TypeChecker ()
 typeCheckItems _ [] = return ()
 typeCheckItems eT (item : items) = do
   typeCheckItem eT item
-  typeCheckItems eT items
+  typeCheckItems eT items 
 
 -- | Type check an item.
 typeCheckItem :: TType -> Item -> TypeChecker ()
 typeCheckItem _ (NoInit _ _) = return ()
 typeCheckItem eT (Init p var e) = do
-  let variableName = getVarFromIdent var
+  let variableName = getNameFromIdent var
   actualType <- typeCheckExpr e
   unless (actualType == eT) 
     $ throwError $ "Type mismatch variable " ++ show variableName ++ ": " ++ show actualType ++ " cannot be assigned to " ++ show eT
@@ -129,7 +142,9 @@ typeCheckType :: Type -> TypeChecker ()   -- TODO
 typeCheckType (Integer _) = return ()
 typeCheckType (String _) = return ()
 typeCheckType (Boolean _) = return ()
-typeCheckType (Void _) = return ()
+typeCheckType (RefInteger _) = return ()
+typeCheckType (RefString _) = return ()
+typeCheckType (RefBoolean _) = return ()
 typeCheckType (Function _ retType argTypes) = do
   typeCheckType retType
   mapM_ typeCheckType argTypes
@@ -203,6 +218,6 @@ typeCheckExpr (ExpOr _ e1 e2) = do
 
 typeCheckExpr (ExpLambda _ args t b) = do -- TODO
     typeCheckArgs args
-    -- omitPosition t
-    typeCheckBlock b
+    let funType = omitPosition t
+    typeCheckFunctionBlock funType b
     return $ Integer ()

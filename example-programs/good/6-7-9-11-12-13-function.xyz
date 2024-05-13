@@ -1,11 +1,15 @@
-Void function testValue(Integer a, String b) {
+Integer function testValue(Integer a, String b) {
     a = a + 1;
     b = "six";
+
+    return 0;
 }
 
-Void function testReference(var Integer a, var String b) {
+Integer function testReference(var Integer a, var String b) {
     a = a + 1;
     b = "six";
+
+    return 0;
 }
 
 Integer function testReturn(Integer a) {
@@ -17,15 +21,17 @@ Integer function main() {
     Integer x = 5;
     String five = "five";
 
-    Void function testGlobal() {
+    Integer function testGlobal() {
         x = x + 1;
         printInt(x);
+        return 0;
     }
 
-    Void function testLocal() {
+    Integer function testLocal() {
         Integer x = 10;
         testGlobal();
         printInt(x);
+        return 0;
     }
 
     testValue(x, five);
