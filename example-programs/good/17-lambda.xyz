@@ -7,7 +7,7 @@ Integer function main() {
     Integer a = 5;
     Integer b = 6;
     Integer c = a + b;
-    Integer(Integer) l = lambda(s);
+    Integer(Integer) l = lambda(c);
     // printInt(l(1));    // 2
 
     return 0;
