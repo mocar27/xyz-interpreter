@@ -41,21 +41,6 @@ getVarFromEnv (Ident var) = do
     Just t  -> return t
     Nothing -> throwError $ "Variable " ++ var ++ " not declared"
 
-getTypeFromRef :: TType -> TType
-getTypeFromRef (RefString _) = String ()
-getTypeFromRef (RefInteger _) = Integer ()
-getTypeFromRef (RefBoolean _) = Boolean ()
-getTypeFromRef t = getTypeFromType t
-
-getTypeFromType :: TType -> TType
-getTypeFromType (RefString _) = String ()
-getTypeFromType (RefInteger _) = Integer ()
-getTypeFromType (RefBoolean _) = Boolean ()
-getTypeFromType (Integer _) = Integer ()
-getTypeFromType (String _) = String ()
-getTypeFromType (Boolean _) = Boolean ()
-getTypeFromType (Function _ retType argTypes) = Function () (getTypeFromType retType) (fmap getTypeFromRef argTypes)
-
 getNameFromIdent :: Ident -> String
 getNameFromIdent (Ident var) = var
 
@@ -98,6 +83,21 @@ getFunctionArgTypesFromEnv (Ident name) = do
     Just _ -> throwError $ "Variable with name " ++ name ++ " is not a function"
     Nothing -> throwError $ "Function with name " ++ name ++ " not declared"
 
+getTypeFromRef :: TType -> TType
+getTypeFromRef (RefString _) = String ()
+getTypeFromRef (RefInteger _) = Integer ()
+getTypeFromRef (RefBoolean _) = Boolean ()
+getTypeFromRef t = getTypeFromType t
+
+getTypeFromType :: TType -> TType
+getTypeFromType (RefString _) = String ()
+getTypeFromType (RefInteger _) = Integer ()
+getTypeFromType (RefBoolean _) = Boolean ()
+getTypeFromType (Integer _) = Integer ()
+getTypeFromType (String _) = String ()
+getTypeFromType (Boolean _) = Boolean ()
+getTypeFromType (Function _ retType argTypes) = Function () (getTypeFromType retType) (fmap getTypeFromRef argTypes)
+
 omitPositionRef :: Type' BNFC'Position -> TType
 omitPositionRef (Integer _) = RefInteger ()
 omitPositionRef (String _) = RefString ()
@@ -111,4 +111,4 @@ omitPosition (Boolean _) = Boolean ()
 omitPosition (RefInteger _) = RefInteger ()
 omitPosition (RefString _) = RefString ()
 omitPosition (RefBoolean _) = RefBoolean ()
-omitPosition (Function _ retType argTypes) = Function () (omitPosition retType) (fmap omitPositionRef argTypes)
+omitPosition (Function _ retType argTypes) = Function () (omitPosition retType) (fmap omitPosition argTypes)

@@ -12,6 +12,8 @@ import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
 
+import Data.Typeable            ( typeOf )
+
 -- | Run the type checker.
 runTypeChecker :: Program -> Either String ()
 runTypeChecker program = runIdentity . runExceptT . (`evalStateT` initialEnv) $ typeCheckProgram program
@@ -49,53 +51,57 @@ typeCheckStmt :: Stmt -> TypeChecker ()
 typeCheckStmt (Empty _) = return ()
 
 typeCheckStmt (Decl _ t items) = do
-  let declType = omitPosition t
+  let tempType = omitPositionRef t
+  let declType = getTypeFromType tempType
   typeCheckItems declType items
   addVariables declType items
 
-typeCheckStmt (Assign i v e) = do
-  expectedType <- getVarFromEnv v
-  let varFromRef = getTypeFromRef expectedType
+typeCheckStmt (Assign _ var e) = do
+  expectedType <- getVarFromEnv var
+  let expectedTypeFromRef = getTypeFromRef expectedType
   actualType <- typeCheckExpr e
-  unless (actualType == expectedType || actualType == varFromRef)
+  unless (actualType == expectedType || actualType == expectedTypeFromRef)
     $ throwError $ "Type mismatch: attempt to assign type " ++ show actualType ++ " to type " ++ show expectedType
 
-typeCheckStmt (If _ e block) = do
-  conditionType <- typeCheckExpr e
+typeCheckStmt (If _ e blck) = do
+  tempType <- typeCheckExpr e
+  let conditionType = getTypeFromType tempType
   unless (conditionType == Boolean ())
-    $ throwError $ "If condition is " ++ show conditionType ++ ", expected was either Boolean ()"
+    $ throwError $ "If condition is " ++ show conditionType ++ ", expected was Boolean ()"
   env <- get
-  typeCheckBlock block
+  typeCheckBlock blck
   put env
 
-typeCheckStmt (IfElse _ e block1 block2) = do
-  conditionType <- typeCheckExpr e
+typeCheckStmt (IfElse _ e blck1 blck2) = do
+  tempType <- typeCheckExpr e
+  let conditionType = getTypeFromType tempType
   unless (conditionType == Boolean ())
-    $ throwError $ "If condition is " ++ show conditionType ++ ", expected was either Boolean ()"
+    $ throwError $ "If condition is " ++ show conditionType ++ ", expected was Boolean ()"
   envIf <- get
-  typeCheckBlock block1
+  typeCheckBlock blck1
   put envIf
   envElse <- get
-  typeCheckBlock block2
+  typeCheckBlock blck2
   put envElse
 
-typeCheckStmt (While _ e block) = do
-  conditionType <- typeCheckExpr e
+typeCheckStmt (While _ e blck) = do
+  tempType <- typeCheckExpr e
+  let conditionType = getTypeFromType tempType
   unless (conditionType == Boolean ())
-    $ throwError $ "While condition is " ++ show conditionType ++ ", expected was either Boolean ()"
+    $ throwError $ "While condition is " ++ show conditionType ++ ", expected was Boolean ()"
   env <- get
-  typeCheckBlock block
+  typeCheckBlock blck
   put env
 
-typeCheckStmt (FunctionDef _ t i args block) = do
+typeCheckStmt (FunctionDef _ t idnt args blck) = do
   let functionType = omitPosition t
   env <- get
   forM_ args $ \a -> case a of
     ArgVal _ t _ -> modify (Map.insert (getArgName a) (omitPosition t))
     ArgRef _ t _ -> modify (Map.insert (getArgName a) (omitPositionRef t))
-  typeCheckFunctionBlock functionType block
+  typeCheckFunctionBlock functionType blck
   put env
-  addFunction i functionType args
+  addFunction idnt functionType args
 
 typeCheckStmt (StmtExp _ e) = do
   _ <- typeCheckExpr e
@@ -111,7 +117,7 @@ typeCheckItems eT (item : items) = do
 -- | Type check an item.
 typeCheckItem :: TType -> Item -> TypeChecker ()
 typeCheckItem _ (NoInit _ _) = return ()
-typeCheckItem eT (Init p var e) = do
+typeCheckItem eT (Init _ var e) = do
   let variableName = getNameFromIdent var
   actualType <- typeCheckExpr e
   unless (actualType == eT)
@@ -170,55 +176,77 @@ typeCheckExpr (ExpApp _ _ es) = do  -- TODO (probably getting type of function f
   return $ Integer ()
 
 typeCheckExpr (ExpNeg _ e) = do
-  varType <- typeCheckExpr e
+  tempType <- typeCheckExpr e
+  let varType = getTypeFromType tempType
   unless (varType == Integer ())
     $ throwError $ "Negation Error: expected type was Integer (), but got " ++ show varType ++ " instead."
   return $ Integer ()
 
 typeCheckExpr (ExpNot _ e) = do
-  varType <- typeCheckExpr e
+  tempType <- typeCheckExpr e
+  let varType = getTypeFromType tempType
   unless (varType == Boolean ())
     $ throwError $ "Negation Error: expected type was Boolean (), but got " ++ show varType ++ " instead."
   return $ Boolean ()
 
 typeCheckExpr (ExpMul _ e1 _ e2) = do
-  varType1 <- typeCheckExpr e1
-  varType2 <- typeCheckExpr e2
+  tempType1 <- typeCheckExpr e1
+  tempType2 <- typeCheckExpr e2
+  let varType1 = getTypeFromType tempType1
+  let varType2 = getTypeFromType tempType2
   unless (varType1 == Integer () && varType2 == Integer ())
     $ throwError $ "Multiplication Error: expected types were Integer (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
   return $ Integer ()
 
 typeCheckExpr (ExpAdd _ e1 _ e2) = do
-  varType1 <- typeCheckExpr e1
-  varType2 <- typeCheckExpr e2
+  tempType1 <- typeCheckExpr e1
+  tempType2 <- typeCheckExpr e2
+  let varType1 = getTypeFromType tempType1
+  let varType2 = getTypeFromType tempType2
   if varType1 == String () && varType2 == String () then return $ String ()
   else if varType1 == Integer () && varType2 == Integer () then return $ Integer ()
   else
     throwError $ "Addition Error: expected types were either both Integer () or String (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
 
 typeCheckExpr (ExpRel _ e1 op e2) = do
-  varType1 <- typeCheckExpr e1
-  varType2 <- typeCheckExpr e2
+  tempType1 <- typeCheckExpr e1
+  tempType2 <- typeCheckExpr e2
+  let varType1 = getTypeFromType tempType1
+  let varType2 = getTypeFromType tempType2
   unless (varType1 == varType2)
     $ throwError $ "Relational Error: cannot do relation operation on mismatch types: " ++ show varType1 ++ " and " ++ show varType2
   return $ Boolean ()
 
 typeCheckExpr (ExpAnd _ e1 e2) = do
-  varType1 <- typeCheckExpr e1
-  varType2 <- typeCheckExpr e2
+  tempType1 <- typeCheckExpr e1
+  tempType2 <- typeCheckExpr e2
+  let varType1 = getTypeFromType tempType1
+  let varType2 = getTypeFromType tempType2
   unless (varType1 == Boolean () && varType2 == Boolean ())
     $ throwError $ "And Error: expected types were Boolean (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
   return $ Boolean ()
 
 typeCheckExpr (ExpOr _ e1 e2) = do
-  varType1 <- typeCheckExpr e1
-  varType2 <- typeCheckExpr e2
+  tempType1 <- typeCheckExpr e1
+  tempType2 <- typeCheckExpr e2
+  let varType1 = getTypeFromType tempType1
+  let varType2 = getTypeFromType tempType2
   unless (varType1 == Boolean () && varType2 == Boolean ())
     $ throwError $ "Or Error: expected types were Boolean (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
   return $ Boolean ()
 
-typeCheckExpr (ExpLambda _ args t b) = do -- TODO
-  typeCheckArgs args
-  let funType = omitPosition t
-  typeCheckFunctionBlock funType b
-  return $ Integer ()
+typeCheckExpr (ExpLambda _ args t blck) = do -- TODO
+
+  let functionType = omitPosition t
+  env <- get
+  forM_ args $ \a -> case a of
+    ArgVal _ t _ -> modify (Map.insert (getArgName a) (omitPosition t))
+    ArgRef _ t _ -> modify (Map.insert (getArgName a) (omitPositionRef t))
+  typeCheckFunctionBlock functionType blck
+  put env
+
+  -- addFunction i functionType args
+  rtrnT <- typeCheckType t
+  -- mapM_ typeCheckType (fmap getArgType args)
+  let argTypes' = fmap getArgType args
+  return $ Function () rtrnT argTypes'
