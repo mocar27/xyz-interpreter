@@ -1,10 +1,14 @@
-Integer(Integer) function lambda (Integer a) {
+Integer(Integer) function lambda (var Integer a) {
     return (Integer x) => Integer {x = a + x; return x;};
 }
 
 Integer function main() {
-    Integer(Integer) l = lambda(10);
-    printInt(l(1));    // 2
+    String s = "siema";
+    Integer a = 5;
+    Integer b = 6;
+    Integer c = a + b;
+    Integer(Integer) l = lambda(s);
+    // printInt(l(1));    // 2
 
     return 0;
 }

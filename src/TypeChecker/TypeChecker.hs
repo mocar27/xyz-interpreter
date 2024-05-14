@@ -117,21 +117,26 @@ typeCheckItem :: TType -> Item -> TypeChecker ()
 typeCheckItem _ (NoInit _ _) = return ()
 typeCheckItem eT (Init _ var e) = do
   let variableName = getNameFromIdent var
-  actualType <- typeCheckExpr e -- jesli po zaimplementowaniu Application lambda dalej sie wywala to to nie smiga
+  actualType <- typeCheckExpr e
   unless (actualType == eT)
     $ throwError $ "Type mismatch variable " ++ show variableName ++ ": " ++ show actualType ++ " cannot be assigned to " ++ show eT
 
 -- | Type check a list of arguments.
-typeCheckArgs :: [Arg] -> TypeChecker ()  -- TODO
-typeCheckArgs [] = return ()
-typeCheckArgs (arg : args) = do
-  typeCheckArg arg
-  typeCheckArgs args
+typeCheckArgs :: [TType] -> [TType] -> TypeChecker ()
+typeCheckArgs [] [] = return ()
+typeCheckArgs [] _ = throwError "Function application Error: too many arguments"
+typeCheckArgs _ [] = throwError "Function application Error: too few arguments"
+typeCheckArgs (fArg : funArgs) (gArg : givenArgs) = do
+  typeCheckArg fArg gArg
+  typeCheckArgs funArgs givenArgs
 
 -- | Type check an argument.
-typeCheckArg :: Arg -> TypeChecker ()     -- TODO
-typeCheckArg (ArgVal _ t _) = undefined
-typeCheckArg (ArgRef _ t _) = undefined
+typeCheckArg :: TType -> TType -> TypeChecker ()
+typeCheckArg expected given = do 
+  let expectedType = getTypeFromType expected
+  let givenType = getTypeFromType given 
+  unless (expectedType == givenType)
+  $ throwError $ "Function application Error: expected type " ++ show expected ++ ", but got " ++ show given ++ " instead."
 
 -- | Type check a list of types.
 typeCheckTypes :: [Type] -> TypeChecker ()
@@ -169,9 +174,15 @@ typeCheckExpr (ExpString _ _) = return $ String ()
 typeCheckExpr (ExpLitTrue _) = return $ Boolean ()
 typeCheckExpr (ExpLitFalse _) = return $ Boolean ()
 
-typeCheckExpr (ExpApp _ _ es) = do  -- TODO (probably getting type of function from Env and comparing to variable it's assigned to)
-  typeCheckExprs es
-  return $ Boolean ()
+typeCheckExpr (ExpApp _ f args) = do
+  function <- getFunctionFromEnv f
+  functionArgsTypes <- getFunctionArgTypesFromEnv f
+  rtrnType <- getFunctionRetTypeFromEnv f
+  unless (length functionArgsTypes == length args)
+    $ throwError $ "Function application Error: expected " ++ show (length functionArgsTypes) ++ " arguments, but got " ++ show (length args) ++ " instead."
+  givenArgs <- mapM typeCheckExpr args
+  typeCheckArgs functionArgsTypes givenArgs
+  return rtrnType 
 
 typeCheckExpr (ExpNeg _ e) = do
   tempType <- typeCheckExpr e
