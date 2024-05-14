@@ -12,3 +12,6 @@ Integer function main() {
 
     return 0;
 }
+
+
+// currently passing, as the example is good, later to be changed to bad 
