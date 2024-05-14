@@ -55,7 +55,6 @@ getTypeFromType (Integer _) = Integer ()
 getTypeFromType (String _) = String ()
 getTypeFromType (Boolean _) = Boolean ()
 getTypeFromType (Function _ retType argTypes) = Function () (getTypeFromType retType) (fmap getTypeFromRef argTypes)
-getTypeFromType t = t
 
 getNameFromIdent :: Ident -> String
 getNameFromIdent (Ident var) = var

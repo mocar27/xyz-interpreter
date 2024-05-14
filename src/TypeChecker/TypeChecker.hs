@@ -3,6 +3,8 @@ module TypeChecker.TypeChecker where
 import TypeChecker.Utils
 import ParserLexer.AbsXyzGrammar
 
+import Prelude                  hiding ( map )
+
 import Data.Map                  as Map
 import Data.Functor.Identity     ( runIdentity )
 
@@ -53,7 +55,7 @@ typeCheckStmt (Decl _ t items) = do
 
 typeCheckStmt (Assign i v e) = do
   expectedType <- getVarFromEnv v
-  let varFromRef = getTypeFromRef expectedType 
+  let varFromRef = getTypeFromRef expectedType
   actualType <- typeCheckExpr e
   unless (actualType == expectedType || actualType == varFromRef)
     $ throwError $ "Type mismatch: attempt to assign type " ++ show actualType ++ " to type " ++ show expectedType
@@ -124,12 +126,10 @@ typeCheckArgs (arg : args) = do
 
 -- | Type check an argument.
 typeCheckArg :: Arg -> TypeChecker ()     -- TODO
-typeCheckArg (ArgVal _ t _) = do
-  typeCheckType t
-typeCheckArg (ArgRef _ t _) = do
-  typeCheckType t
+typeCheckArg (ArgVal _ t _) = undefined
+typeCheckArg (ArgRef _ t _) = undefined
 
--- | Type check a list of types.          -- TODO
+-- | Type check a list of types.
 typeCheckTypes :: [Type] -> TypeChecker ()
 typeCheckTypes [] = return ()
 typeCheckTypes (t : ts) = do
@@ -137,16 +137,18 @@ typeCheckTypes (t : ts) = do
   typeCheckTypes ts
 
 -- | Type check a type.
-typeCheckType :: Type -> TypeChecker ()   -- TODO
-typeCheckType (Integer _) = return ()
-typeCheckType (String _) = return ()
-typeCheckType (Boolean _) = return ()
-typeCheckType (RefInteger _) = return ()
-typeCheckType (RefString _) = return ()
-typeCheckType (RefBoolean _) = return ()
+typeCheckType :: Type -> TypeChecker TType
+typeCheckType (Integer _) = return $ Integer ()
+typeCheckType (String _) = return $ String ()
+typeCheckType (Boolean _) = return $ Boolean ()
+typeCheckType (RefInteger _) = return $ RefInteger ()
+typeCheckType (RefString _) = return $ RefString ()
+typeCheckType (RefBoolean _) = return $ RefBoolean ()
 typeCheckType (Function _ retType argTypes) = do
-  typeCheckType retType
+  rtrnT <- typeCheckType retType
   mapM_ typeCheckType argTypes
+  let argTypes' = fmap omitPositionRef argTypes
+  return $ Function () rtrnT argTypes'
 
 -- | Type check a list of expressions.
 typeCheckExprs :: [Expr] -> TypeChecker ()
