@@ -12,8 +12,6 @@ import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
 
-import Data.Typeable            ( typeOf )
-
 -- | Run the type checker.
 runTypeChecker :: Program -> Either String ()
 runTypeChecker program = runIdentity . runExceptT . (`evalStateT` initialEnv) $ typeCheckProgram program
@@ -34,10 +32,10 @@ typeCheckFunctionBlock t (FnBlock _ stmts rtrn) = do
 
 -- | Type check a return statement.
 typeCheckReturn :: TType -> Rtrn -> TypeChecker ()
-typeCheckReturn t (Ret _ e) = do
+typeCheckReturn eT (Ret _ e) = do
   rtrnType <- typeCheckExpr e
-  unless (rtrnType == t)
-    $ throwError $ "Return type mismatch: Function is type " ++ show t ++ ", but return is type " ++ show rtrnType
+  unless (rtrnType == eT)
+    $ throwError $ "Return type mismatch: Function is type " ++ show eT ++ ", but return is type " ++ show rtrnType
 
 -- | Type check a list of statements.
 typeCheckStmts :: [Stmt] -> TypeChecker ()
@@ -119,7 +117,7 @@ typeCheckItem :: TType -> Item -> TypeChecker ()
 typeCheckItem _ (NoInit _ _) = return ()
 typeCheckItem eT (Init _ var e) = do
   let variableName = getNameFromIdent var
-  actualType <- typeCheckExpr e
+  actualType <- typeCheckExpr e -- jesli po zaimplementowaniu Application lambda dalej sie wywala to to nie smiga
   unless (actualType == eT)
     $ throwError $ "Type mismatch variable " ++ show variableName ++ ": " ++ show actualType ++ " cannot be assigned to " ++ show eT
 
@@ -173,7 +171,7 @@ typeCheckExpr (ExpLitFalse _) = return $ Boolean ()
 
 typeCheckExpr (ExpApp _ _ es) = do  -- TODO (probably getting type of function from Env and comparing to variable it's assigned to)
   typeCheckExprs es
-  return $ Integer ()
+  return $ Boolean ()
 
 typeCheckExpr (ExpNeg _ e) = do
   tempType <- typeCheckExpr e
@@ -235,8 +233,7 @@ typeCheckExpr (ExpOr _ e1 e2) = do
     $ throwError $ "Or Error: expected types were Boolean (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
   return $ Boolean ()
 
-typeCheckExpr (ExpLambda _ args t blck) = do -- TODO
-
+typeCheckExpr (ExpLambda _ args t blck) = do
   let functionType = omitPosition t
   env <- get
   forM_ args $ \a -> case a of
@@ -245,8 +242,6 @@ typeCheckExpr (ExpLambda _ args t blck) = do -- TODO
   typeCheckFunctionBlock functionType blck
   put env
 
-  -- addFunction i functionType args
   rtrnT <- typeCheckType t
-  -- mapM_ typeCheckType (fmap getArgType args)
   let argTypes' = fmap getArgType args
   return $ Function () rtrnT argTypes'
