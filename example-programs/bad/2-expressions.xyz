@@ -12,4 +12,5 @@ Integer function main() {
     
     six < seven;
 
+    return 0;
 }

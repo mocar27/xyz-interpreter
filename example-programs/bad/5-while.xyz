@@ -8,4 +8,6 @@ Integer function main() {
     while (t) {
         z = y;
     }
+
+    return 0;
 }

@@ -3,4 +3,6 @@ Integer function main() {
     String x = "test";
     x;
     y;
+
+    return 0;
 }

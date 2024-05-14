@@ -1,4 +1,6 @@
 Integer function main() {
 
     int x;
+
+    return 0;
 }

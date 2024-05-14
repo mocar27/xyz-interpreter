@@ -1,10 +1,23 @@
-Integer function lambda (Integer a) {
+
+/*
+Integer(Integer) function lambda (Integer a) {
     return (Integer x) => Integer {x = a + x; return x;};
 }
 
 Integer function main() {
     Integer(Integer) l = lambda(1);
-    print(l(1));    // 2
+    printInt(l(1));    // 2
 
+    return 0;
+}
+*/
+
+
+Integer function main() {
+    Integer(Integer) a = (Integer x) => Integer {
+        return x + 1;
+    };  
+
+    printInt(1);
     return 0;
 }

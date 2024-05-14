@@ -1,11 +1,11 @@
-Void function main() {
+Integer function main() {
     
     Integer x = 5;
     Boolean yes = true;
     Boolean no = false;
 
     if(yes && no) {
-        return;
+       yes;
     }
 
     if(yes || no) {
