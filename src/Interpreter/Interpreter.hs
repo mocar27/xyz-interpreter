@@ -15,26 +15,26 @@ runFile f = readFile f >>= run
 
 run :: String -> IO ()
 run s = case prog of
-    Left err -> do 
-      putStrLn "\nParser failed!\n"
-      putStrLn (err ++ "\n")
-      exitFailure
-    Right tree -> do
-      case runTypeChecker tree of
-        Left err -> do
-          putStrLn "\nTypeChecker failed!\n"
-          putStrLn (err ++ "\n")
-          exitFailure
-        Right _ -> do
-          programResult <- runEvaluator tree 
-          case programResult of
-            Left err -> do
-              putStrLn "\nEvaluator failed!\n"
-              putStrLn (err ++ "\n")
-              exitFailure
-            Right _ -> do
-              putStrLn "\nEvaluation successful!\n"
-              exitSuccess
+  Left err -> do 
+    putStrLn "\nParser failed!\n"
+    putStrLn (err ++ "\n")
+    exitFailure
+  Right tree -> do
+    case runTypeChecker tree of
+      Left err -> do
+        putStrLn "\nTypeChecker failed!\n"
+        putStrLn (err ++ "\n")
+        exitFailure
+      Right _ -> do
+        programResult <- runEvaluator tree 
+        case programResult of
+          Left err -> do
+            putStrLn "\nEvaluator failed!\n"
+            putStrLn (err ++ "\n")
+            exitFailure
+          Right _ -> do
+            putStrLn "\nEvaluation successful!\n"
+            exitSuccess
   where
     ts = myLexer s
     prog = pProgram ts

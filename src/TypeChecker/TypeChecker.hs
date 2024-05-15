@@ -35,14 +35,13 @@ typeCheckReturn eT (Ret _ e) = do
   unless (rtrnType == eT)
     $ throwError $ "Return type mismatch: Function is type " ++ show eT ++ ", but return is type " ++ show rtrnType
 
--- | Type check a list of statements.
+-- | Type check statements.
 typeCheckStmts :: [Stmt] -> TypeChecker ()
 typeCheckStmts [] = return ()
 typeCheckStmts (stmt : stmts) = do
   typeCheckStmt stmt
   typeCheckStmts stmts
 
--- | Type check a statement.
 typeCheckStmt :: Stmt -> TypeChecker ()
 typeCheckStmt (Empty _) = return ()
 
@@ -103,14 +102,13 @@ typeCheckStmt (StmtExp _ e) = do
   _ <- typeCheckExpr e
   return ()
 
--- | Type check a list of items.
+-- | Type check items.
 typeCheckItems :: TType -> [Item] -> TypeChecker ()
 typeCheckItems _ [] = return ()
 typeCheckItems eT (item : items) = do
   typeCheckItem eT item
   typeCheckItems eT items
 
--- | Type check an item.
 typeCheckItem :: TType -> Item -> TypeChecker ()
 typeCheckItem _ (NoInit _ _) = return ()
 typeCheckItem eT (Init _ var e) = do
@@ -119,7 +117,7 @@ typeCheckItem eT (Init _ var e) = do
   unless (actualType == eT)
     $ throwError $ "Type mismatch variable " ++ show variableName ++ ": " ++ show actualType ++ " cannot be assigned to " ++ show eT
 
--- | Type check a list of arguments.
+-- | Type check arguments.
 typeCheckArgs :: [TType] -> [TType] -> TypeChecker ()
 typeCheckArgs [] [] = return ()
 typeCheckArgs [] _ = throwError "Function application Error: too many arguments"
@@ -128,7 +126,6 @@ typeCheckArgs (fArg : funArgs) (gArg : givenArgs) = do
   typeCheckArg fArg gArg
   typeCheckArgs funArgs givenArgs
 
--- | Type check an argument.
 typeCheckArg :: TType -> TType -> TypeChecker ()
 typeCheckArg expected given = do 
   let expectedType = getTypeFromType expected
@@ -136,14 +133,13 @@ typeCheckArg expected given = do
   unless (expectedType == givenType)
   $ throwError $ "Function application Error: expected type " ++ show expected ++ ", but got " ++ show given ++ " instead."
 
--- | Type check a list of types.
+-- | Type check types
 typeCheckTypes :: [Type] -> TypeChecker ()
 typeCheckTypes [] = return ()
 typeCheckTypes (t : ts) = do
   _ <- typeCheckType t
   typeCheckTypes ts
 
--- | Type check a type.
 typeCheckType :: Type -> TypeChecker TType
 typeCheckType (Integer _) = return $ Integer ()
 typeCheckType (String _) = return $ String ()
@@ -157,14 +153,13 @@ typeCheckType (Function _ retType argTypes) = do
   let argTypes' = fmap omitPositionRef argTypes
   return $ Function () rtrnT argTypes'
 
--- | Type check a list of expressions.
+-- | Type check expressions.
 typeCheckExprs :: [Expr] -> TypeChecker ()
 typeCheckExprs [] = return ()
 typeCheckExprs (e : es) = do
   _ <- typeCheckExpr e
   typeCheckExprs es
 
--- | Type check an expression.
 typeCheckExpr :: Expr -> TypeChecker TType
 typeCheckExpr (ExpVar _ var) = getVarFromEnv var
 typeCheckExpr (ExpLitInt _ _) = return $ Integer ()

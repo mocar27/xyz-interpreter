@@ -22,7 +22,7 @@ initialEnv = fromList [
   ("printBoolean", Function () (Boolean ()) [Boolean ()])
   ];
 
--- Function to add a variable to the global environment.
+-- Helper functions for the type checker and for Env.
 addVariables :: TType -> [Item] -> TypeChecker ()
 addVariables _ [] = return ()
 addVariables t ((NoInit _ v) : items) = do
