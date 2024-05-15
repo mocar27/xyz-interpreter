@@ -23,7 +23,7 @@ type Evaluator a = StateT (Env, Store) (ExceptT String IO) a
 -- | Values
 data Value
   = VInt Integer
-  | VString String
+  | VStr String
   | VBool Bool
   | VLoc Loc
   | VFun (Arg, [Stmt], Type) Env
@@ -34,3 +34,18 @@ initialEnv = Map.empty
 
 initialStore :: Store
 initialStore = Map.empty
+
+getNameFromIdent :: Ident -> String
+getNameFromIdent (Ident var) = var
+
+getArgName :: Arg -> String
+getArgName (ArgVal _ _ name) = getNameFromIdent name
+getArgName (ArgRef _ _ name) = getNameFromIdent name
+
+defaultVal :: Type -> Value
+defaultVal (Integer _) = VInt 0
+defaultVal (String _) = VStr ""
+defaultVal (Boolean _) = VBool False
+
+getIntFromVal :: Value -> Integer
+getIntFromVal (VInt i) = i

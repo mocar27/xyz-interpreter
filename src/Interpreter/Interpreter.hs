@@ -6,12 +6,8 @@ import TypeChecker.TypeChecker
 import Evaluator.Evaluator
 import ParserLexer.ParXyzGrammar   ( pProgram, myLexer )
 
-import Prelude                     ( (.),
-                                    Either(..), (>),
-                                    String, (++),
-                                    Show, show, 
-                                    IO, (>>), (>>=), mapM_, putStrLn,
-                                    FilePath, readFile )
+import Prelude                     ( String, (++), IO, (>>=), putStrLn, FilePath, readFile )
+
 import System.Exit                 ( exitSuccess, exitFailure )
 
 runFile :: FilePath -> IO ()
