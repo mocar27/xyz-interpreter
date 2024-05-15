@@ -3,7 +3,7 @@ module TypeChecker.TypeChecker where
 import TypeChecker.Utils
 import ParserLexer.AbsXyzGrammar
 
-import Prelude                  hiding ( map )
+import Prelude                   hiding ( map )
 
 import Data.Map                  as Map
 import Data.Functor.Identity     ( runIdentity )
