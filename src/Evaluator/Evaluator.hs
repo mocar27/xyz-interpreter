@@ -14,6 +14,6 @@ import Control.Monad.Except
 runEvaluator :: Program -> IO (Either Err ExitCode)
 runEvaluator program = runExceptT $ evalStateT (evalProgram program) (initialEnv, initialStore)
 
-evalProgram :: Program -> Evaluator Value
+evalProgram :: Program -> Evaluator ExitCode
 evalProgram (MyProgram p stmts) = do
     throwError "Not implemented"
