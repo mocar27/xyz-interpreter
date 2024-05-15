@@ -11,7 +11,7 @@ import Control.Monad.State
 import Control.Monad.Except
 
 -- | Run the type checker.
-runTypeChecker :: Program -> Either String ()
+runTypeChecker :: Program -> Either Err ()
 runTypeChecker program = runIdentity . runExceptT . (`evalStateT` initialEnv) $ typeCheckProgram program
 
 -- | Type check a program.

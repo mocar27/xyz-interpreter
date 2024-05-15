@@ -9,6 +9,7 @@ import Control.Monad.State
 import Control.Monad.Except
 
 -- | Types
+type Err = String
 type TType = Type' ()
 type Env = Map.Map String TType
 type TypeChecker a = StateT Env (ExceptT String Identity) a

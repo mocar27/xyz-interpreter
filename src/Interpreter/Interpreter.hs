@@ -2,17 +2,17 @@
 
 module Interpreter.Interpreter ( run, runFile ) where
 
+import TypeChecker.TypeChecker
+import Evaluator.Evaluator
+import ParserLexer.ParXyzGrammar   ( pProgram, myLexer )
+
 import Prelude                     ( (.),
                                     Either(..), (>),
                                     String, (++),
                                     Show, show, 
                                     IO, (>>), (>>=), mapM_, putStrLn,
                                     FilePath, readFile )
-import ParserLexer.ParXyzGrammar   ( pProgram, myLexer )
 import System.Exit                 ( exitSuccess, exitFailure )
-
-import TypeChecker.TypeChecker     ( runTypeChecker )
--- import Evaluator.Evaluator         ( runEvaluator )
 
 runFile :: FilePath -> IO ()
 runFile f = readFile f >>= run
@@ -29,19 +29,16 @@ run s = case prog of
           putStrLn "\nTypeChecker failed!\n"
           putStrLn (err ++ "\n")
           exitFailure
-        Right _ -> do -- TODO
-          putStrLn "\nType checking successful!\n"
-    --       programResult <- runEvaluator tree 
-    --       case programResult of
-    --         Left err -> do -- error
-    --           putStrLn "\nEvaluator failed!\n"
-    --           putStrLn ("Error message: " ++ err ++ "\n")
-    --           exitFailure
-    --         Right _ -> do -- TODO
-    --           putStrLn "\nEvaluation successful!\n"
-    --           putStrLn "\nProgram result:"
-    --         --   putStrLn . show programResult
-    --           exitSuccess
+        Right _ -> do
+          programResult <- runEvaluator tree 
+          case programResult of
+            Left err -> do
+              putStrLn "\nEvaluator failed!\n"
+              putStrLn (err ++ "\n")
+              exitFailure
+            Right _ -> do
+              putStrLn "\nEvaluation successful!\n"
+              exitSuccess
   where
     ts = myLexer s
     prog = pProgram ts
