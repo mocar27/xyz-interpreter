@@ -8,7 +8,7 @@ Integer function main() {
     Integer b = 6;
     Integer c = a + b;
     Integer(Integer) l = lambda(c);
-    // printInt(l(1));    // 2
+    // printInteger(l(1));    // 2
 
     return 0;
 }
@@ -20,7 +20,7 @@ Integer function main() {
         return x + 1;
     };  
 
-    printInt(1);
+    printInteger(1);
     return 0;
 }
 */

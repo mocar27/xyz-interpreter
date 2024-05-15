@@ -23,30 +23,30 @@ Integer function main() {
 
     Integer function testGlobal() {
         x = x + 1;
-        printInt(x);
+        printInteger(x);
         return 0;
     }
 
     Integer function testLocal() {
         Integer x = 10;
         testGlobal();
-        printInt(x);
+        printInteger(x);
         return 0;
     }
 
     testValue(x, five);
-    printInt(x);       // x = 5
+    printInteger(x);       // x = 5
     printString(five); // five = "five"
 
     testReference(x, five);
-    printInt(x);       // x = 6
+    printInteger(x);       // x = 6
     printString(five); // five = "six"
 
     x = testReturn(x);
-    printInt(x);        // x = 500
+    printInteger(x);        // x = 500
 
     testLocal();
-    printInt(x);    // x = 501
+    printInteger(x);    // x = 501
 
     return 0;
 }

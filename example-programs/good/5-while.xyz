@@ -2,7 +2,7 @@ Integer function test() {
     Integer x = 5;
 
     while (x < 10) {
-        printInt(x);
+        printInteger(x);
         x = x + 1;
     }
 

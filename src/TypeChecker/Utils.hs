@@ -15,7 +15,11 @@ type TypeChecker a = StateT Env (ExceptT String Identity) a
 
 -- | Environment mapping variable names to types.
 initialEnv :: Env
-initialEnv = Map.empty
+initialEnv = fromList [
+  ("printInteger", Function () (Integer ()) [Integer ()]),
+  ("printString", Function () (String ()) [String ()]),
+  ("printBoolean", Function () (Boolean ()) [Boolean ()])
+  ];
 
 -- Function to add a variable to the global environment.
 addVariables :: TType -> [Item] -> TypeChecker ()

@@ -9,11 +9,11 @@ Integer function main() {
     }
 
     if(yes || no) {
-        printInt(x);
+        printInteger(x);
     }
 
     else {
-        printInt(x * x);
+        printInteger(x * x);
     }
 
     return 0;

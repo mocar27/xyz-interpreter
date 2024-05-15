@@ -9,9 +9,6 @@ Integer function test(var String x, Boolean y, Integer z) {
 
 Integer function main() {
     String s = "siema";
-
+    printBoolean(s);
     return 0;
 }
-
-
-// currently passing, as the example is good, later to be changed to bad 
