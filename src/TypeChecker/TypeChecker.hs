@@ -95,8 +95,8 @@ typeCheckStmt (FunctionDef _ t idnt args blck) = do
   let functionType = omitPosition t
   env <- get
   forM_ args $ \a -> case a of
-    ArgVal _ t _ -> modify (Map.insert (getArgName a) (omitPosition t))
-    ArgRef _ t _ -> modify (Map.insert (getArgName a) (omitPositionRef t))
+    ArgVal _ tp _ -> modify (Map.insert (getArgName a) (omitPosition tp))
+    ArgRef _ tp _ -> modify (Map.insert (getArgName a) (omitPositionRef tp))
   typeCheckFunctionBlock functionType blck
   put env
   addFunction idnt functionType args
@@ -142,7 +142,7 @@ typeCheckArg expected given = do
 typeCheckTypes :: [Type] -> TypeChecker ()
 typeCheckTypes [] = return ()
 typeCheckTypes (t : ts) = do
-  typeCheckType t
+  _ <- typeCheckType t
   typeCheckTypes ts
 
 -- | Type check a type.
@@ -163,7 +163,7 @@ typeCheckType (Function _ retType argTypes) = do
 typeCheckExprs :: [Expr] -> TypeChecker ()
 typeCheckExprs [] = return ()
 typeCheckExprs (e : es) = do
-  typeCheckExpr e
+  _ <- typeCheckExpr e
   typeCheckExprs es
 
 -- | Type check an expression.
@@ -175,7 +175,6 @@ typeCheckExpr (ExpLitTrue _) = return $ Boolean ()
 typeCheckExpr (ExpLitFalse _) = return $ Boolean ()
 
 typeCheckExpr (ExpApp _ f args) = do
-  function <- getFunctionFromEnv f
   functionArgsTypes <- getFunctionArgTypesFromEnv f
   rtrnType <- getFunctionRetTypeFromEnv f
   unless (length functionArgsTypes == length args)
@@ -217,7 +216,7 @@ typeCheckExpr (ExpAdd _ e1 _ e2) = do
   else
     throwError $ "Addition Error: expected types were either both Integer () or String (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
 
-typeCheckExpr (ExpRel _ e1 op e2) = do
+typeCheckExpr (ExpRel _ e1 _ e2) = do
   tempType1 <- typeCheckExpr e1
   tempType2 <- typeCheckExpr e2
   let varType1 = getTypeFromType tempType1
@@ -248,8 +247,8 @@ typeCheckExpr (ExpLambda _ args t blck) = do
   let functionType = omitPosition t
   env <- get
   forM_ args $ \a -> case a of
-    ArgVal _ t _ -> modify (Map.insert (getArgName a) (omitPosition t))
-    ArgRef _ t _ -> modify (Map.insert (getArgName a) (omitPositionRef t))
+    ArgVal _ tp _ -> modify (Map.insert (getArgName a) (omitPosition tp))
+    ArgRef _ tp _ -> modify (Map.insert (getArgName a) (omitPositionRef tp))
   typeCheckFunctionBlock functionType blck
   put env
 

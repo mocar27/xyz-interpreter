@@ -24,8 +24,6 @@ source-repository head
 
 library
   exposed-modules:
-      Evaluator.Evaluator
-      Interpreter.Interpreter
       ParserLexer.AbsXyzGrammar
       ParserLexer.ErrM
       ParserLexer.LexXyzGrammar
@@ -34,6 +32,9 @@ library
       ParserLexer.SkelXyzGrammar
       TypeChecker.TypeChecker
       TypeChecker.Utils
+      Evaluator.Evaluator
+      Evaluator.Utils
+      Interpreter.Interpreter
   other-modules:
       Paths_xyz_interpreter
   autogen-modules:
