@@ -5,9 +5,7 @@ import ParserLexer.AbsXyzGrammar
 import Prelude                   as C
 
 import Data.Map                  as Map
-import Data.Functor.Identity     ( Identity )
 
-import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
 
@@ -26,7 +24,7 @@ data Value
   | VStr String
   | VBool Bool
   | VLoc Loc
-  | VFun (Arg, [Stmt], Type) Env
+  | VFun ([Arg], FunBlock, Type) Env
   deriving (C.Eq, C.Show)
 
 -- | Environment and Store mappings and functions
@@ -35,6 +33,9 @@ initialEnv = Map.empty
 
 initialStore :: Store
 initialStore = Map.empty
+
+newLoc :: Store -> Integer
+newLoc = toInteger . size
 
 addVariableToEnv :: Var -> Loc -> Evaluator ()
 addVariableToEnv var loc = modifyEnv (Map.insert var loc)
@@ -71,8 +72,35 @@ getValueFromLoc loc = do
 getNameFromIdent :: Ident -> String
 getNameFromIdent (Ident var) = var
 
+getValueFromVal :: Value -> Either (Either String Integer) Bool
+getValueFromVal (VInt i) = Left (Right i)
+getValueFromVal (VStr s) = Left (Left s)
+getValueFromVal (VBool b) = Right b
+getValueFromVal _ = error "Expected Integer, String or Boolean value"
+
 getIntFromVal :: Value -> Integer
 getIntFromVal (VInt i) = i
+getIntFromVal _ = error "Expected Integer value"
+
+getStringFromVal :: Value -> String
+getStringFromVal (VStr s) = s
+getStringFromVal _ = error "Expected String value"
+
+getBoolFromVal :: Value -> Bool
+getBoolFromVal (VBool b) = b
+getBoolFromVal _ = error "Expected Boolean value"
+
+isInteger :: Value -> Bool
+isInteger (VInt _) = True
+isInteger _ = False
+
+isString :: Value -> Bool
+isString (VStr _) = True
+isString _ = False
+
+isBoolean :: Value -> Bool
+isBoolean (VBool _) = True
+isBoolean _ = False
 
 getArgName :: Arg -> String
 getArgName (ArgVal _ _ name) = getNameFromIdent name
@@ -82,3 +110,4 @@ defaultVal :: Type -> Value
 defaultVal (Integer _) = VInt 0
 defaultVal (String _) = VStr ""
 defaultVal (Boolean _) = VBool False
+defaultVal _ = error "Cannot create default value for non-primitive type"

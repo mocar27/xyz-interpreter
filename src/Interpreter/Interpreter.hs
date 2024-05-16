@@ -6,7 +6,7 @@ import TypeChecker.TypeChecker
 import Evaluator.Evaluator
 import ParserLexer.ParXyzGrammar   ( pProgram, myLexer )
 
-import Prelude                     ( String, (++), IO, (>>=), putStrLn, FilePath, readFile )
+import Prelude                     ( Either(..), String, (++), IO, (>>=), putStrLn, FilePath, readFile )
 
 import System.Exit                 ( exitSuccess, exitFailure )
 

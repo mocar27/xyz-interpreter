@@ -3,9 +3,8 @@ module Evaluator.Evaluator where
 import Evaluator.Utils
 import ParserLexer.AbsXyzGrammar
 
-import Data.Map                  as Map
+-- import Data.Map                  as Map
 
-import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
 
@@ -21,9 +20,9 @@ evalProgram (MyProgram p stmts) = do
 
 evalBlock :: Block -> Evaluator ExitCode -- todo
 evalBlock (StmtBlock _ stmts) = do
-  (env, _) <- get
+  (env, s) <- get
   evalStmts stmts
-  put env
+  put (env, s)
   return $ VInt 0
 
 evalFBlock :: FunBlock -> Evaluator ExitCode -- todo
@@ -31,12 +30,12 @@ evalFBlock (FnBlock _ stmts rtrn) = do
   env <- get
   evalStmts stmts
   put env
-  evalStmt rtrn
+  evalReturn rtrn
 
 evalStmts :: [Stmt] -> Evaluator () -- todo
 evalStmts [] = return ()
 evalStmts (stmt : stmts) = do
-  evalStmt stmt
+  _ <- evalStmt stmt
   evalStmts stmts
 
 evalStmt :: Stmt -> Evaluator ExitCode -- todo
@@ -57,27 +56,39 @@ evalStmt (Assign _ var e) = do
 --     liftIO $ print val
 --     return VInt 0
 
-evalStmt (If _ e stmt) = do
+evalStmt (If _ e blck) = do
   val <- evalExpr e
-  case val of
-    VBool True -> evalBlock stmt
-    VBool False -> return $ VInt 0
+  let cond = getBoolFromVal val
+  (if cond then evalBlock blck else return $ VInt 0)
 
-evalStmt (IfElse _ e stmt1 stmt2) = do
+evalStmt (IfElse _ e blck1 blck2) = do
   val <- evalExpr e
-  case val of
-    VBool True -> evalStmt stmt1
-    VBool False -> evalStmt stmt2
+  let cond = getBoolFromVal val
+  (if cond then evalBlock blck1 else evalBlock blck2)
 
-evalStmt (While p e stmt) = do
+evalStmt (While p e blck) = do
   val <- evalExpr e
-  case val of
-    VBool True -> evalStmt stmt >> evalStmt (While p e stmt)
-    VBool False -> return $ VInt 0
+  let cond = getBoolFromVal val
+  (if cond then evalBlock blck >> evalStmt (While p e blck) else return $ VInt 0) -- infinite loop?
 
-evalStmt (StmtBlock _ block) = evalBlock block
+evalStmt (FunctionDef _ t ident args blck) = do
+  (env, s) <- get
+  let var = getNameFromIdent ident
+  let newL = newLoc s
+  addVariableToEnv var newL
 
-evalStmt (Ret _ e) = evalExpr e
+  let fun = VFun (args, blck, t) env
+  storeVariableValue newL fun
+  return $ VInt 0
+
+evalStmt (StmtExp _ e) = do
+  _ <- evalExpr e
+  return $ VInt 0
+
+-- evalStmt (StmtBlock _ blck) = evalBlock blck
+
+evalReturn :: Rtrn -> Evaluator ExitCode -- todo
+evalReturn (Ret _ e) = evalExpr e
 
 evalItems :: Type -> [Item] -> Evaluator () -- todo
 evalItems _ [] = return ()
@@ -94,17 +105,15 @@ evalItems t ((Init _ v e) : items) = do
 -- evalExprArg :: Env -> Expr -> Value -- todo
 -- evalExprArg env e = evalStateT (evalExpr e) (env, initialStore)
 
-evalExpr :: Expr -> Evaluator Value -- todo
-evalExpr (ExpVar _ var) = do
-  loc <- getLocOfVar (getNameFromIdent var)
-  getValueFromLoc loc
+evalExpr :: Expr -> Evaluator Value
+evalExpr (ExpVar _ var) = getValue (getNameFromIdent var)
 
 evalExpr (ExpLitInt _ i) = return $ VInt i
 evalExpr (ExpString _ s) = return $ VStr s
 evalExpr (ExpLitTrue _) = return $ VBool True
 evalExpr (ExpLitFalse _) = return $ VBool False
 
-evalExpr (ExpApp _ ident args) = do
+evalExpr (ExpApp _ ident args) = do  -- todo
   function <- getValue (getNameFromIdent ident)
   -- env <- get
   -- let argNames = fmap getArgName funArgs
@@ -118,56 +127,65 @@ evalExpr (ExpApp _ ident args) = do
 
 evalExpr (ExpNeg _ e) = do
   val <- evalExpr e
-  case val of
-    VInt i -> return $ VInt (-i)
+  let i = getIntFromVal val
+  return $ VInt (-i)
 
 evalExpr (ExpNot _ e) = do
   val <- evalExpr e
-  case val of
-    VBool b -> return $ VBool (not b)
+  let b = getBoolFromVal val
+  return $ VBool (not b)
 
 evalExpr (ExpMul _ e1 op e2) = do
   val1 <- evalExpr e1
   val2 <- evalExpr e2
+  let i1 = getIntFromVal val1
+  let i2 = getIntFromVal val2
   case op of
-    Multi _ -> return $ VInt (getIntFromVal val1 * getIntFromVal val2)
-    Div _ -> return $ VInt (getIntFromVal val1 `div` getIntFromVal val2)
-    Mod _ -> return $ VInt (getIntFromVal val1 `mod` getIntFromVal val2)
+    Multi _ -> return $ VInt (i1 * i2)
+    Div _ -> do 
+      if i2 == 0 then error "Multiplication error: Division by zero"
+      else return $ VInt (i1 `div` i2)
+    Mod _ -> return $ VInt (i1 `mod` i2)
 
 evalExpr (ExpAdd _ e1 op e2) = do
   val1 <- evalExpr e1
   val2 <- evalExpr e2
+  let v1 = isInteger val1
+  let v2 = isInteger val2
   case op of
-    Plus _ -> case (val1, val2) of
-      (VInt i1, VInt i2) -> return $ VInt (i1 + i2)
-      (VStr s1, VStr s2) -> return $ VStr (s1 ++ s2)
-    Minus _ -> return $ VInt (getIntFromVal val1 - getIntFromVal val2)
+    Plus _ -> if v1 && v2 then return $ VInt (getIntFromVal val1 + getIntFromVal val2)
+              else if isString val1 && isString val2 then return $ VStr (getStringFromVal val1 ++ getStringFromVal val2)
+              else error "Addition Error: expected types were Integer () and Integer (), or String () and String (), but got something else instead."
+    Minus _ -> if v1 && v2 then return $ VInt (getIntFromVal val1 - getIntFromVal val2)
+               else error "Subtraction Error: expected types were Integer () and Integer (), but got something else instead."
 
 evalExpr (ExpRel _ e1 op e2) = do
   val1 <- evalExpr e1
   val2 <- evalExpr e2
+  let v1 = getValueFromVal val1
+  let v2 = getValueFromVal val2
   case op of
-    LThan _ -> return $ VBool (getIntFromVal val1 < getIntFromVal val2)
-    Leq _ -> return $ VBool (getIntFromVal val1 <= getIntFromVal val2)
-    GThan _ -> return $ VBool (getIntFromVal val1 > getIntFromVal val2)
-    Geq _ -> return $ VBool (getIntFromVal val1 >= getIntFromVal val2)
-    Eq _ -> return $ VBool (val1 == val2)
-    NEq _ -> return $ VBool (val1 /= val2)
+    LThan _ -> return $ VBool (v1 < v2)
+    Leq _ -> return $ VBool (v1 <= v2)
+    GThan _ -> return $ VBool (v1 > v2)
+    Geq _ -> return $ VBool (v1 >= v2)
+    Eq _ -> return $ VBool (v1 == v2)
+    NEq _ -> return $ VBool (v1 /= v2)
 
 evalExpr (ExpAnd _ e1 e2) = do
   val1 <- evalExpr e1
-  case val1 of
-    VBool False -> return $ VBool False
-    VBool True -> do
-      val2 <- evalExpr e2
-      case val2 of
-        VBool b -> return $ VBool b
+  val2 <- evalExpr e2
+  let b1 = getBoolFromVal val1
+  let b2 = getBoolFromVal val2
+  return $ VBool (b1 && b2)
 
 evalExpr (ExpOr _ e1 e2) = do
   val1 <- evalExpr e1
-  case val1 of
-    VBool True -> return $ VBool True
-    VBool False -> do
-      val2 <- evalExpr e2
-      case val2 of
-        VBool b -> return $ VBool b
+  val2 <- evalExpr e2
+  let b1 = getBoolFromVal val1
+  let b2 = getBoolFromVal val2
+  return $ VBool (b1 || b2)
+
+evalExpr (ExpLambda _ args t blck) = do  -- todo
+  env <- get
+  return $ VInt 0
