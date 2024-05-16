@@ -18,6 +18,7 @@ evalProgram (MyProgram p stmts) = do
   _ <- evalStmts stmts
   evalExpr (ExpApp p (Ident "main") [])
 
+-- | Evaluate a block.
 evalBlock :: Block -> Evaluator ExitCode -- todo
 evalBlock (StmtBlock _ stmts) = do
   (env, s) <- get
@@ -25,6 +26,7 @@ evalBlock (StmtBlock _ stmts) = do
   put (env, s)
   return $ VInt 0
 
+-- | Evaluate a function block.
 evalFBlock :: FunBlock -> Evaluator ExitCode -- todo
 evalFBlock (FnBlock _ stmts rtrn) = do
   env <- get
@@ -32,6 +34,11 @@ evalFBlock (FnBlock _ stmts rtrn) = do
   put env
   evalReturn rtrn
 
+-- | Evaluate a return statement.
+evalReturn :: Rtrn -> Evaluator ExitCode -- todo
+evalReturn (Ret _ e) = evalExpr e
+
+-- | Evaluate statements.
 evalStmts :: [Stmt] -> Evaluator () -- todo
 evalStmts [] = return ()
 evalStmts (stmt : stmts) = do
@@ -87,9 +94,7 @@ evalStmt (StmtExp _ e) = do
 
 -- evalStmt (StmtBlock _ blck) = evalBlock blck
 
-evalReturn :: Rtrn -> Evaluator ExitCode -- todo
-evalReturn (Ret _ e) = evalExpr e
-
+-- | Evaluate items.
 evalItems :: Type -> [Item] -> Evaluator () -- todo
 evalItems _ [] = return ()
 evalItems t ((NoInit _ v) : items) = do
@@ -102,9 +107,11 @@ evalItems t ((Init _ v e) : items) = do
   storeVariableValue loc val
   evalItems t items
 
+-- | Evaluate arguments.
 -- evalExprArg :: Env -> Expr -> Value -- todo
 -- evalExprArg env e = evalStateT (evalExpr e) (env, initialStore)
 
+-- | Evaluate an expression.
 evalExpr :: Expr -> Evaluator Value
 evalExpr (ExpVar _ var) = getValue (getNameFromIdent var)
 
