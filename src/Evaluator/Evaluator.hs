@@ -19,7 +19,7 @@ evalProgram (MyProgram p stmts) = do
   evalExpr (ExpApp p (Ident "main") [])
 
 -- | Evaluate a block.
-evalBlock :: Block -> Evaluator ExitCode -- todo
+evalBlock :: Block -> Evaluator ExitCode -- todo, move env and store getting and putting to statements instead of here?
 evalBlock (StmtBlock _ stmts) = do
   (env, s) <- get
   evalStmts stmts
@@ -29,9 +29,7 @@ evalBlock (StmtBlock _ stmts) = do
 -- | Evaluate a function block.
 evalFBlock :: FunBlock -> Evaluator ExitCode -- todo
 evalFBlock (FnBlock _ stmts rtrn) = do
-  env <- get
   evalStmts stmts
-  put env
   evalReturn rtrn
 
 -- | Evaluate a return statement.
@@ -73,13 +71,13 @@ evalStmt (While p e blck) = do
   let cond = getBoolFromVal val
   (if cond then evalBlock blck >> evalStmt (While p e blck) else return $ VInt 0) -- infinite loop?
 
-evalStmt (FunctionDef _ t ident args blck) = do -- todo
+evalStmt (FunctionDef _ t ident args blck) = do
   (env, s) <- get
   let var = getNameFromIdent ident
   let newL = newLoc s
   addVariableToEnv var newL
-
-  let fun = VFun (args, blck, t) env
+  -- (fenv, _) <- get
+  let fun = VFun (args, blck, t) env -- fenv or env?
   storeVariableValue newL fun
   return $ VInt 0
 
@@ -118,16 +116,10 @@ evalExpr (ExpLitTrue _) = return $ VBool True
 evalExpr (ExpLitFalse _) = return $ VBool False
 
 evalExpr (ExpApp _ ident args) = do  -- todo
+  (env, s) <- get
   let funName = getNameFromIdent ident
   function <- getValue funName
-  -- env <- get
-  -- let argNames = fmap getArgName funArgs
-  -- let argVals = fmap (evalExprArg env) args
-  -- let newEnv = Map.fromList $ zip argNames argVals
-  -- put (newEnv, initialStore)
-  -- retVal <- evalStmts funStmts
-  -- put env
-  -- return retVal
+
   return $ VInt 0
 
 evalExpr (ExpNeg _ e) = do

@@ -7,6 +7,7 @@ all:
 #	./interpreter --help
 
 # Additional build option, in case we want to look for warnings and errors
+# Build option does not build the program, it only checks for errors and warnings in fancy colors
 build:
 	cabal build
 
