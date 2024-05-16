@@ -4,7 +4,6 @@ import Evaluator.Utils
 import ParserLexer.AbsXyzGrammar
 
 import Data.Map                  as Map
-import Data.Functor.Identity     ( Identity, runIdentity )
 
 import Control.Monad
 import Control.Monad.State
@@ -14,17 +13,18 @@ import Control.Monad.Except
 runEvaluator :: Program -> IO (Either Err ExitCode)
 runEvaluator program = runExceptT $ evalStateT (evalProgram program) (initialEnv, initialStore)
 
+-- | Evaluate a program.
 evalProgram :: Program -> Evaluator ExitCode
 evalProgram (MyProgram p stmts) = do
   _ <- evalStmts stmts
-  evalStmt (ExpApp (ExpVar (Ident "main") []))
+  evalExpr (ExpApp p (Ident "main") [])
 
 evalBlock :: Block -> Evaluator ExitCode -- todo
 evalBlock (StmtBlock _ stmts) = do
-  env <- get
+  (env, _) <- get
   evalStmts stmts
   put env
-  return VInt 0
+  return $ VInt 0
 
 evalFBlock :: FunBlock -> Evaluator ExitCode -- todo
 evalFBlock (FnBlock _ stmts rtrn) = do
@@ -40,17 +40,17 @@ evalStmts (stmt : stmts) = do
   evalStmts stmts
 
 evalStmt :: Stmt -> Evaluator ExitCode -- todo
-evalStmt (Empty _) = return VInt 0
+evalStmt (Empty _) = return $ VInt 0
 
 evalStmt (Decl _ t items) = do
   evalItems t items
-  return VInt 0
+  return $ VInt 0
 
 evalStmt (Assign _ var e) = do
-  loc <- getVar var
+  loc <- getLocOfVar (getNameFromIdent var)
   val <- evalExpr e
-  addValue loc val
-  return VInt 0
+  storeVariableValue loc val
+  return $ VInt 0
 
 -- evalStmt (Print _ e) = do
 --     val <- evalExpr e
@@ -60,8 +60,8 @@ evalStmt (Assign _ var e) = do
 evalStmt (If _ e stmt) = do
   val <- evalExpr e
   case val of
-    VBool True -> evalStmt stmt
-    VBool False -> return VInt 0
+    VBool True -> evalBlock stmt
+    VBool False -> return $ VInt 0
 
 evalStmt (IfElse _ e stmt1 stmt2) = do
   val <- evalExpr e
@@ -69,11 +69,11 @@ evalStmt (IfElse _ e stmt1 stmt2) = do
     VBool True -> evalStmt stmt1
     VBool False -> evalStmt stmt2
 
-evalStmt (While _ e stmt) = do
+evalStmt (While p e stmt) = do
   val <- evalExpr e
   case val of
-    VBool True -> evalStmt stmt >> evalStmt (While () e stmt)
-    VBool False -> return VInt 0
+    VBool True -> evalStmt stmt >> evalStmt (While p e stmt)
+    VBool False -> return $ VInt 0
 
 evalStmt (StmtBlock _ block) = evalBlock block
 
@@ -82,22 +82,22 @@ evalStmt (Ret _ e) = evalExpr e
 evalItems :: Type -> [Item] -> Evaluator () -- todo
 evalItems _ [] = return ()
 evalItems t ((NoInit _ v) : items) = do
-  loc <- getVar v
-  addValue loc ( defaultVal t )
+  loc <- getLocOfVar (getNameFromIdent v)
+  storeVariableValue loc (defaultVal t)
   evalItems t items
 evalItems t ((Init _ v e) : items) = do
-  loc <- getVar v
+  loc <- getLocOfVar (getNameFromIdent v)
   val <- evalExpr e
-  addValue loc val
+  storeVariableValue loc val
   evalItems t items
 
-evalExprArg :: Env -> Expr -> Value -- todo
-evalExprArg env e = evalStateT (evalExpr e) (env, initialStore)
+-- evalExprArg :: Env -> Expr -> Value -- todo
+-- evalExprArg env e = evalStateT (evalExpr e) (env, initialStore)
 
 evalExpr :: Expr -> Evaluator Value -- todo
 evalExpr (ExpVar _ var) = do
-  loc <- getVar var
-  getValFromLoc loc
+  loc <- getLocOfVar (getNameFromIdent var)
+  getValueFromLoc loc
 
 evalExpr (ExpLitInt _ i) = return $ VInt i
 evalExpr (ExpString _ s) = return $ VStr s
@@ -105,16 +105,16 @@ evalExpr (ExpLitTrue _) = return $ VBool True
 evalExpr (ExpLitFalse _) = return $ VBool False
 
 evalExpr (ExpApp _ ident args) = do
-  (arg, stmts, t) <- getFunction ident
-  env <- get
-  let argNames = fmap getArgName arg
-  let argTypes = fmap getArgType arg
-  let argVals = fmap (evalExprArg env) args
-  let newEnv = Map.fromList $ zip argNames argVals
-  put (newEnv, initialStore)
-  evalStmts stmts
-  put env
-  return $ defaultVal t
+  function <- getValue (getNameFromIdent ident)
+  -- env <- get
+  -- let argNames = fmap getArgName funArgs
+  -- let argVals = fmap (evalExprArg env) args
+  -- let newEnv = Map.fromList $ zip argNames argVals
+  -- put (newEnv, initialStore)
+  -- retVal <- evalStmts funStmts
+  -- put env
+  -- return retVal
+  return $ VInt 0
 
 evalExpr (ExpNeg _ e) = do
   val <- evalExpr e

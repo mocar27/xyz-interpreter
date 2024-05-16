@@ -11,7 +11,7 @@ Hello
 *Main* file is the main file taking the input and passing it to interpreter.
 
 *Interpreter* file is the file that runs Parser & Lexer on given input, 
-then if it returns success it runs TypeChecker, and if the result is successfull
+then if it returns success it runs TypeChecker, and if the result is successful
 it runs the Evaluator. 
 
 ## Some nuances / changes to initial grammar

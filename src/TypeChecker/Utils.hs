@@ -22,7 +22,7 @@ initialEnv = fromList [
   ("printBoolean", Function () (Boolean ()) [Boolean ()])
   ];
 
--- Helper functions for the type checker and for Env.
+-- | Helper functions for Environment.
 addVariables :: TType -> [Item] -> TypeChecker ()
 addVariables _ [] = return ()
 addVariables t ((NoInit _ v) : items) = do
@@ -46,25 +46,6 @@ getVarFromEnv (Ident var) = do
     Just t  -> return t
     Nothing -> throwError $ "Variable " ++ var ++ " not declared"
 
-getNameFromIdent :: Ident -> String
-getNameFromIdent (Ident var) = var
-
-getOperationType :: RelOp' BNFC'Position -> String
-getOperationType (LThan _) = "<"
-getOperationType (Leq _) = "<="
-getOperationType (GThan _) = ">"
-getOperationType (Geq _) = ">="
-getOperationType (Eq _) = "=="
-getOperationType (NEq _) = "!="
-
-getArgName :: Arg -> String
-getArgName (ArgVal _ _ name) = getNameFromIdent name
-getArgName (ArgRef _ _ name) = getNameFromIdent name
-
-getArgType :: Arg -> TType
-getArgType (ArgVal _ t _) = omitPosition t
-getArgType (ArgRef _ t _) = omitPositionRef t
-
 getFunctionFromEnv :: Ident -> TypeChecker TType
 getFunctionFromEnv (Ident name) = do
   env <- get
@@ -87,6 +68,26 @@ getFunctionArgTypesFromEnv (Ident name) = do
     Just (Function _ _ argTypes) -> return argTypes
     Just _ -> throwError $ "Variable with name " ++ name ++ " is not a function"
     Nothing -> throwError $ "Function with name " ++ name ++ " not declared"
+
+-- | Helper functions for the type checker.
+getNameFromIdent :: Ident -> String
+getNameFromIdent (Ident var) = var
+
+getOperationType :: RelOp' BNFC'Position -> String
+getOperationType (LThan _) = "<"
+getOperationType (Leq _) = "<="
+getOperationType (GThan _) = ">"
+getOperationType (Geq _) = ">="
+getOperationType (Eq _) = "=="
+getOperationType (NEq _) = "!="
+
+getArgName :: Arg -> String
+getArgName (ArgVal _ _ name) = getNameFromIdent name
+getArgName (ArgRef _ _ name) = getNameFromIdent name
+
+getArgType :: Arg -> TType
+getArgType (ArgVal _ t _) = omitPosition t
+getArgType (ArgRef _ t _) = omitPositionRef t
 
 getTypeFromRef :: TType -> TType
 getTypeFromRef (RefString _) = String ()
