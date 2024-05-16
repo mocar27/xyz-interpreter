@@ -56,17 +56,17 @@ getValue var = do
 
 getLocOfVar :: Var -> Evaluator Loc
 getLocOfVar var = do
-	(env, _) <- get
-	case Map.lookup var env of
-		Just loc -> return loc
-		Nothing -> throwError $ "Variable " ++ var ++ " not declared"
+  (env, _) <- get
+  case Map.lookup var env of
+    Just loc -> return loc
+    Nothing -> throwError $ "Variable " ++ var ++ " not declared"
 
 getValueFromLoc :: Loc -> Evaluator Value
 getValueFromLoc loc = do
-	(_, store) <- get
-	case Map.lookup loc store of
-		Just val -> return val
-		Nothing -> throwError $ "Location " ++ show loc ++ " not found"
+  (_, store) <- get
+  case Map.lookup loc store of
+    Just val -> return val
+    Nothing -> throwError $ "Location " ++ show loc ++ " not found"
 
 -- | Helper functions
 getNameFromIdent :: Ident -> String
@@ -106,8 +106,8 @@ getArgName :: Arg -> String
 getArgName (ArgVal _ _ name) = getNameFromIdent name
 getArgName (ArgRef _ _ name) = getNameFromIdent name
 
-defaultVal :: Type -> Value
-defaultVal (Integer _) = VInt 0
-defaultVal (String _) = VStr ""
-defaultVal (Boolean _) = VBool False
-defaultVal _ = error "Cannot create default value for non-primitive type"
+defaultValue :: Type -> Value
+defaultValue (Integer _) = VInt 0
+defaultValue (String _) = VStr ""
+defaultValue (Boolean _) = VBool False
+defaultValue _ = error "Cannot create default value for non-primitive type"

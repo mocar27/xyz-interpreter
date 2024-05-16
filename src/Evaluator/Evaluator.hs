@@ -39,13 +39,13 @@ evalReturn :: Rtrn -> Evaluator ExitCode -- todo
 evalReturn (Ret _ e) = evalExpr e
 
 -- | Evaluate statements.
-evalStmts :: [Stmt] -> Evaluator () -- todo
+evalStmts :: [Stmt] -> Evaluator ()
 evalStmts [] = return ()
 evalStmts (stmt : stmts) = do
   _ <- evalStmt stmt
   evalStmts stmts
 
-evalStmt :: Stmt -> Evaluator ExitCode -- todo
+evalStmt :: Stmt -> Evaluator ExitCode
 evalStmt (Empty _) = return $ VInt 0
 
 evalStmt (Decl _ t items) = do
@@ -53,15 +53,10 @@ evalStmt (Decl _ t items) = do
   return $ VInt 0
 
 evalStmt (Assign _ var e) = do
-  loc <- getLocOfVar (getNameFromIdent var)
   val <- evalExpr e
+  loc <- getLocOfVar (getNameFromIdent var)
   storeVariableValue loc val
   return $ VInt 0
-
--- evalStmt (Print _ e) = do
---     val <- evalExpr e
---     liftIO $ print val
---     return VInt 0
 
 evalStmt (If _ e blck) = do
   val <- evalExpr e
@@ -78,7 +73,7 @@ evalStmt (While p e blck) = do
   let cond = getBoolFromVal val
   (if cond then evalBlock blck >> evalStmt (While p e blck) else return $ VInt 0) -- infinite loop?
 
-evalStmt (FunctionDef _ t ident args blck) = do
+evalStmt (FunctionDef _ t ident args blck) = do -- todo
   (env, s) <- get
   let var = getNameFromIdent ident
   let newL = newLoc s
@@ -92,19 +87,21 @@ evalStmt (StmtExp _ e) = do
   _ <- evalExpr e
   return $ VInt 0
 
--- evalStmt (StmtBlock _ blck) = evalBlock blck
-
 -- | Evaluate items.
-evalItems :: Type -> [Item] -> Evaluator () -- todo
+evalItems :: Type -> [Item] -> Evaluator ()
 evalItems _ [] = return ()
 evalItems t ((NoInit _ v) : items) = do
-  loc <- getLocOfVar (getNameFromIdent v)
-  storeVariableValue loc (defaultVal t)
+  (_, s) <- get
+  let newL = newLoc s
+  addVariableToEnv (getNameFromIdent v) newL
+  storeVariableValue newL (defaultValue t)
   evalItems t items
 evalItems t ((Init _ v e) : items) = do
-  loc <- getLocOfVar (getNameFromIdent v)
   val <- evalExpr e
-  storeVariableValue loc val
+  (_, s) <- get
+  let newL = newLoc s
+  addVariableToEnv (getNameFromIdent v) newL
+  storeVariableValue newL val
   evalItems t items
 
 -- | Evaluate arguments.
@@ -121,7 +118,8 @@ evalExpr (ExpLitTrue _) = return $ VBool True
 evalExpr (ExpLitFalse _) = return $ VBool False
 
 evalExpr (ExpApp _ ident args) = do  -- todo
-  function <- getValue (getNameFromIdent ident)
+  let funName = getNameFromIdent ident
+  function <- getValue funName
   -- env <- get
   -- let argNames = fmap getArgName funArgs
   -- let argVals = fmap (evalExprArg env) args
