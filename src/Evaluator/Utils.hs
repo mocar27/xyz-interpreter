@@ -19,9 +19,6 @@ type Store = Map.Map Loc Value
 type Evaluator a = StateT (Env, Store) (ExceptT String IO) a
 
 -- | Values
--- data Fun = Fun ([Arg], FunBlock, Type) Env | PrintInteger | PrintString | PrintBoolean
-  -- deriving (C.Eq, C.Show)
-
 data Value
   = VInt Integer
   | VStr String
