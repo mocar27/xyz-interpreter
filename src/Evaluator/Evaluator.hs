@@ -81,8 +81,8 @@ evalStmt (FunctionDef _ t ident args blck) = do
   let var = getNameFromIdent ident
   let newL = newLoc s
   addVariableToEnv var newL
-  -- (fenv, _) <- get
-  let fun = VFun (args, blck, t) env -- fenv or env?
+  -- (funEnv, _) <- get          -- todo check if this is needed, whether use env or funEnv i let fun = 
+  let fun = VFun (args, blck, t) env
   storeVariableValue newL fun
 
 evalStmt (StmtExp _ e) = do
@@ -125,10 +125,10 @@ evalExpr (ExpApp _ ident args) = do  -- todo
   function <- getValue funName
   case function of
     VFun (fargs, blck, t) fenv -> do
-      -- let newEnv = Map.union fenv env
-      -- let newEnv' = Map.union newEnv (Map.fromList (zip (fmap getArgName fargs) (fmap (VInt . getIntFromVal) (fmap (evalExpr args) args))))
+      -- args
+      rtrnVal <- evalFBlock blck
       modify (\(_, st) -> (env, st)) -- fenv or env?
-      evalFBlock blck
+      return rtrnVal
     PrintInteger -> do
       val <- evalExpr (head args)
       liftIO $ print $ getIntFromVal val
