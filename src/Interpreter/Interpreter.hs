@@ -34,8 +34,6 @@ run s = case prog of
             putStrLn (err ++ "\n")
             exitFailure
           Right _ -> do
-            putStrLn "\nEvaluation successful!\n"
-            -- putStrLn ("Evaluation exit code: " ++ show programResult)
             exitSuccess
   where
     ts = myLexer s

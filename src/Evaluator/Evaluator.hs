@@ -119,7 +119,25 @@ evalExpr (ExpApp _ ident args) = do  -- todo
   (env, s) <- get
   let funName = getNameFromIdent ident
   function <- getValue funName
-
+  case function of
+    VFun (fargs, blck, t) fenv -> do
+      -- let newEnv = Map.union fenv env
+      -- let newEnv' = Map.union newEnv (Map.fromList (zip (fmap getArgName fargs) (fmap (VInt . getIntFromVal) (fmap (evalExpr args) args))))
+      modify (\(_, s) -> (env, s)) -- fenv or env?
+      evalFBlock blck
+    PrintInteger -> do
+      val <- evalExpr (head args)
+      liftIO $ print $ getIntFromVal val
+      return $ VInt 0
+    PrintString -> do
+      val <- evalExpr (head args)
+      liftIO $ print $ getStringFromVal val
+      return $ VStr ""
+    PrintBoolean -> do
+      val <- evalExpr (head args)
+      liftIO $ print $ getBoolFromVal val
+      return $ VBool False
+    _ -> error "Expected function, but got something else instead."
   return $ VInt 0
 
 evalExpr (ExpNeg _ e) = do

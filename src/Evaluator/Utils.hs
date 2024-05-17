@@ -19,20 +19,34 @@ type Store = Map.Map Loc Value
 type Evaluator a = StateT (Env, Store) (ExceptT String IO) a
 
 -- | Values
+-- data Fun = Fun ([Arg], FunBlock, Type) Env | PrintInteger | PrintString | PrintBoolean
+  -- deriving (C.Eq, C.Show)
+
 data Value
   = VInt Integer
   | VStr String
   | VBool Bool
   | VLoc Loc
   | VFun ([Arg], FunBlock, Type) Env
+  | PrintInteger
+  | PrintString
+  | PrintBoolean
   deriving (C.Eq, C.Show)
 
 -- | Environment and Store mappings and functions
 initialEnv :: Env
-initialEnv = Map.empty
+initialEnv = Map.fromList [
+  ("printInteger", 0),
+  ("printString", 1),
+  ("printBoolean", 2)
+  ]
 
 initialStore :: Store
-initialStore = Map.empty
+initialStore = Map.fromList [
+  (0, PrintInteger),
+  (1, PrintString),
+  (2, PrintBoolean)
+  ]
 
 newLoc :: Store -> Integer
 newLoc = toInteger . size
