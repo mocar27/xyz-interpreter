@@ -1,3 +1,5 @@
+Integer t = 5;
+
 Integer function main() {
     
     Integer x = 5;
@@ -9,12 +11,15 @@ Integer function main() {
     }
 
     if(yes || no) {
-        printInteger(x * x);
+        Integer t = 2;
+        x = x * x;
+        printInteger(t);
     }
-
     else {
-        printInteger(x);
+        Integer t = 3;
+        printInteger(t);
     }
+    printInteger(t);
 
     return 0;
 }

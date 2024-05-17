@@ -31,7 +31,7 @@ Hello
 ## Sources used during programming
 
 - My own laboratory assignments codes
-- Provided lab descriptions on Moodle
+- Provided lab descriptions on Moodle (Monads 1., Monads 2., Lab Haskell-Extra, Types)
 - https://wiki.haskell.org/wikiupload/c/c6/ICMI45-paper-en.pdf
 - https://learnyouahaskell.com/chapters
 - https://jameshfisher.com/2018/03/06/an-interpreter-in-haskell/ 

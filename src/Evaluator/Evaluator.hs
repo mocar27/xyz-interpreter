@@ -3,8 +3,6 @@ module Evaluator.Evaluator where
 import Evaluator.Utils
 import ParserLexer.AbsXyzGrammar
 
--- import Data.Map                  as Map
-
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
@@ -16,22 +14,22 @@ runEvaluator program = runExceptT $ evalStateT (evalProgram program) (initialEnv
 -- | Evaluate a program.
 evalProgram :: Program -> Evaluator ()
 evalProgram (MyProgram p stmts) = do
-  _ <- evalStmts stmts                -- delete this line?
+  _ <- evalStmts stmts
   _ <- evalExpr (ExpApp p (Ident "main") [])
   return ()
 
 -- | Evaluate a block.
-evalBlock :: Block -> Evaluator () -- todo, move env and store getting and putting to statements instead of here?
+evalBlock :: Block -> Evaluator ()
 evalBlock (StmtBlock _ stmts) = evalStmts stmts
 
 -- | Evaluate a function block.
-evalFBlock :: FunBlock -> Evaluator () -- todo
+evalFBlock :: FunBlock -> Evaluator ()
 evalFBlock (FnBlock _ stmts rtrn) = do
   evalStmts stmts
   evalReturn rtrn
 
 -- | Evaluate a return statement.
-evalReturn :: Rtrn -> Evaluator () -- todo
+evalReturn :: Rtrn -> Evaluator ()
 evalReturn (Ret _ e) = do 
   _ <- evalExpr e
   return ()
@@ -43,7 +41,7 @@ evalStmts (stmt : stmts) = do
   _ <- evalStmt stmt
   evalStmts stmts
 
-evalStmt :: Stmt -> Evaluator ()    -- todo, move env and store getting and putting to statements
+evalStmt :: Stmt -> Evaluator ()
 evalStmt (Empty _) = return ()
 
 evalStmt (Decl _ t items) = evalItems t items
@@ -55,18 +53,28 @@ evalStmt (Assign _ var e) = do
 
 evalStmt (If _ e blck) = do
   val <- evalExpr e
+  (env, _) <- get
   let cond = getBoolFromVal val
   when cond $ evalBlock blck
+  modify (\(_, st) -> (env, st))
 
 evalStmt (IfElse _ e blck1 blck2) = do
   val <- evalExpr e
+  (env, _) <- get
   let cond = getBoolFromVal val
-  (if cond then evalBlock blck1 else evalBlock blck2)
+  if cond then do 
+    evalBlock blck1 
+    modify (\(_, st) -> (env, st))
+  else do 
+    evalBlock blck2
+    modify (\(_, st) -> (env, st))
 
-evalStmt (While p e blck) = do -- todo
+evalStmt (While p e blck) = do 
   val <- evalExpr e
+  (env, _) <- get
   let cond = getBoolFromVal val
-  when cond $ evalBlock blck >> evalStmt (While p e blck) -- infinite loop?
+  when cond $ evalBlock blck >> evalStmt (While p e blck)
+  modify (\(_, st) -> (env, st))
 
 evalStmt (FunctionDef _ t ident args blck) = do
   (env, s) <- get

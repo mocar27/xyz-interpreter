@@ -4,7 +4,19 @@ Integer function main() {
     while (x < 10) {
         printInteger(x);
         x = x + 1;
+
+        while (x < 100) {
+            printInteger(x);
+            x = x + 1;
+        }
+        Integer y = 30;
+        while (y > 20) {
+            printInteger(y);
+            y = y - 1;
+        }
     }
+    printString("After loop");
+    printInteger(x);
 
     return 0;
 }
