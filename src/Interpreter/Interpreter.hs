@@ -7,7 +7,7 @@ import Evaluator.Evaluator
 import Evaluator.Utils 
 import ParserLexer.ParXyzGrammar   ( pProgram, myLexer )
 
-import Prelude                     ( Either(..), String, (++), IO, (>>=), show, putStrLn, FilePath, readFile )
+import Prelude                     ( Either(..), String, (++), IO, (>>=), putStrLn, FilePath, readFile )
 
 import System.Exit                 ( exitSuccess, exitFailure )
 

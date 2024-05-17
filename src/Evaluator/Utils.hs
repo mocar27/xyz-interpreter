@@ -11,7 +11,6 @@ import Control.Monad.Except
 
 -- | Types
 type Err = String
-type ExitCode = Value
 type Var = String
 type Loc = Integer
 type Env = Map.Map Var Loc

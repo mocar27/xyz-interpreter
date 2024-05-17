@@ -5,36 +5,36 @@ import ParserLexer.AbsXyzGrammar
 
 -- import Data.Map                  as Map
 
+import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
 
 -- | Run the evaluator.
-runEvaluator :: Program -> IO (Either Err ExitCode)
+runEvaluator :: Program -> IO (Either Err ())
 runEvaluator program = runExceptT $ evalStateT (evalProgram program) (initialEnv, initialStore)
 
 -- | Evaluate a program.
-evalProgram :: Program -> Evaluator ExitCode
+evalProgram :: Program -> Evaluator ()
 evalProgram (MyProgram p stmts) = do
-  _ <- evalStmts stmts
-  evalExpr (ExpApp p (Ident "main") [])
+  _ <- evalStmts stmts                -- delete this line?
+  _ <- evalExpr (ExpApp p (Ident "main") [])
+  return ()
 
 -- | Evaluate a block.
-evalBlock :: Block -> Evaluator ExitCode -- todo, move env and store getting and putting to statements instead of here?
-evalBlock (StmtBlock _ stmts) = do
-  (env, s) <- get
-  evalStmts stmts
-  put (env, s)
-  return $ VInt 0
+evalBlock :: Block -> Evaluator () -- todo, move env and store getting and putting to statements instead of here?
+evalBlock (StmtBlock _ stmts) = evalStmts stmts
 
 -- | Evaluate a function block.
-evalFBlock :: FunBlock -> Evaluator ExitCode -- todo
+evalFBlock :: FunBlock -> Evaluator () -- todo
 evalFBlock (FnBlock _ stmts rtrn) = do
   evalStmts stmts
   evalReturn rtrn
 
 -- | Evaluate a return statement.
-evalReturn :: Rtrn -> Evaluator ExitCode -- todo
-evalReturn (Ret _ e) = evalExpr e
+evalReturn :: Rtrn -> Evaluator () -- todo
+evalReturn (Ret _ e) = do 
+  _ <- evalExpr e
+  return ()
 
 -- | Evaluate statements.
 evalStmts :: [Stmt] -> Evaluator ()
@@ -43,33 +43,30 @@ evalStmts (stmt : stmts) = do
   _ <- evalStmt stmt
   evalStmts stmts
 
-evalStmt :: Stmt -> Evaluator ExitCode
-evalStmt (Empty _) = return $ VInt 0
+evalStmt :: Stmt -> Evaluator ()    -- todo, move env and store getting and putting to statements
+evalStmt (Empty _) = return ()
 
-evalStmt (Decl _ t items) = do
-  evalItems t items
-  return $ VInt 0
+evalStmt (Decl _ t items) = evalItems t items
 
 evalStmt (Assign _ var e) = do
   val <- evalExpr e
   loc <- getLocOfVar (getNameFromIdent var)
   storeVariableValue loc val
-  return $ VInt 0
 
 evalStmt (If _ e blck) = do
   val <- evalExpr e
   let cond = getBoolFromVal val
-  (if cond then evalBlock blck else return $ VInt 0)
+  when cond $ evalBlock blck
 
 evalStmt (IfElse _ e blck1 blck2) = do
   val <- evalExpr e
   let cond = getBoolFromVal val
   (if cond then evalBlock blck1 else evalBlock blck2)
 
-evalStmt (While p e blck) = do
+evalStmt (While p e blck) = do -- todo
   val <- evalExpr e
   let cond = getBoolFromVal val
-  (if cond then evalBlock blck >> evalStmt (While p e blck) else return $ VInt 0) -- infinite loop?
+  when cond $ evalBlock blck >> evalStmt (While p e blck) -- infinite loop?
 
 evalStmt (FunctionDef _ t ident args blck) = do
   (env, s) <- get
@@ -79,11 +76,10 @@ evalStmt (FunctionDef _ t ident args blck) = do
   -- (fenv, _) <- get
   let fun = VFun (args, blck, t) env -- fenv or env?
   storeVariableValue newL fun
-  return $ VInt 0
 
 evalStmt (StmtExp _ e) = do
   _ <- evalExpr e
-  return $ VInt 0
+  return ()
 
 -- | Evaluate items.
 evalItems :: Type -> [Item] -> Evaluator ()
@@ -123,20 +119,20 @@ evalExpr (ExpApp _ ident args) = do  -- todo
     VFun (fargs, blck, t) fenv -> do
       -- let newEnv = Map.union fenv env
       -- let newEnv' = Map.union newEnv (Map.fromList (zip (fmap getArgName fargs) (fmap (VInt . getIntFromVal) (fmap (evalExpr args) args))))
-      modify (\(_, s) -> (env, s)) -- fenv or env?
+      modify (\(_, st) -> (env, st)) -- fenv or env?
       evalFBlock blck
     PrintInteger -> do
       val <- evalExpr (head args)
       liftIO $ print $ getIntFromVal val
-      return $ VInt 0
+      return ()
     PrintString -> do
       val <- evalExpr (head args)
       liftIO $ print $ getStringFromVal val
-      return $ VStr ""
+      return ()
     PrintBoolean -> do
       val <- evalExpr (head args)
       liftIO $ print $ getBoolFromVal val
-      return $ VBool False
+      return ()
     _ -> error "Expected function, but got something else instead."
   return $ VInt 0
 
@@ -157,7 +153,7 @@ evalExpr (ExpMul _ e1 op e2) = do
   let i2 = getIntFromVal val2
   case op of
     Multi _ -> return $ VInt (i1 * i2)
-    Div _ -> do 
+    Div _ -> do
       if i2 == 0 then error "Multiplication error: Division by zero"
       else return $ VInt (i1 `div` i2)
     Mod _ -> return $ VInt (i1 `mod` i2)
