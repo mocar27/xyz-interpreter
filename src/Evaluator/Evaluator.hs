@@ -26,16 +26,14 @@ evalBlock :: Block -> Evaluator ()
 evalBlock (StmtBlock _ stmts) = evalStmts stmts
 
 -- | Evaluate a function block.
-evalFBlock :: FunBlock -> Evaluator ()
+evalFBlock :: FunBlock -> Evaluator Value
 evalFBlock (FnBlock _ stmts rtrn) = do
   evalStmts stmts
   evalReturn rtrn
 
 -- | Evaluate a return statement.
-evalReturn :: Rtrn -> Evaluator ()
-evalReturn (Ret _ e) = do
-  _ <- evalExpr e
-  return ()
+evalReturn :: Rtrn -> Evaluator Value
+evalReturn (Ret _ e) = evalExpr e
 
 -- | Evaluate statements.
 evalStmts :: [Stmt] -> Evaluator ()
@@ -134,7 +132,7 @@ evalExpr (ExpApp _ ident args) = do  -- todo
   (env, s) <- get
   let funName = getNameFromIdent ident
   function <- getValue funName
-  case function of
+  _ <- case function of
     VFun (fargs, blck, t) fenv -> do
       setFunArgsAndEnv fargs args fenv
       -- modify (\(_, st) -> (fenv, st))
@@ -146,15 +144,15 @@ evalExpr (ExpApp _ ident args) = do  -- todo
     PrintInteger -> do
       val <- evalExpr (head args)
       liftIO $ print $ getIntFromVal val
-      return ()
+      return $ VInt 0
     PrintString -> do
       val <- evalExpr (head args)
       liftIO $ print $ getStringFromVal val
-      return ()
+      return $ VStr ""
     PrintBoolean -> do
       val <- evalExpr (head args)
       liftIO $ print $ getBoolFromVal val
-      return ()
+      return $ VBool False
     _ -> error "Expected function, but got something else instead."
   return $ VInt 0
 
