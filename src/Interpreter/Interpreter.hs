@@ -4,7 +4,6 @@ module Interpreter.Interpreter ( run, runFile ) where
 
 import TypeChecker.TypeChecker
 import Evaluator.Evaluator
-import Evaluator.Utils 
 import ParserLexer.ParXyzGrammar   ( pProgram, myLexer )
 
 import Prelude                     ( Either(..), String, (++), IO, (>>=), putStrLn, FilePath, readFile )

@@ -1,10 +1,11 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use record patterns" #-}
 module Evaluator.Evaluator where
 
 import Evaluator.Utils
 import ParserLexer.AbsXyzGrammar
 
 import Prelude                    hiding ( foldr )
-import Data.Map                   as Map
 
 import Control.Monad
 import Control.Monad.State
@@ -107,11 +108,12 @@ evalItems t ((Init _ v e) : items) = do
   evalItems t items
 
 -- | Evaluate arguments.
-evalExprArg :: Arg -> Expr -> Evaluator Value           -- todo
-evalExprArg (ArgVal _ t _) e = evalExpr e
-evalExprArg (ArgRef _ t (Ident name)) e = do
-  loc <- getLocOfVar name
+evalExprArg :: Arg -> Expr -> Evaluator Value
+evalExprArg (ArgVal _ _ _) e = evalExpr e
+evalExprArg (ArgRef _ _ _) (ExpVar _ (Ident var))= do
+  loc <- getLocOfVar var
   return $ VLoc loc
+evalExprArg _ _ = error "Expected variable"
 
 setFunArgsAndEnv :: [Arg] -> [Expr] -> Env -> Evaluator ()
 setFunArgsAndEnv fargs es fenv = do
@@ -128,30 +130,29 @@ evalExpr (ExpString _ s) = return $ VStr s
 evalExpr (ExpLitTrue _) = return $ VBool True
 evalExpr (ExpLitFalse _) = return $ VBool False
 
-evalExpr (ExpApp _ ident args) = do  -- todo
-  (env, s) <- get
+evalExpr (ExpApp _ ident args) = do
+  (env, _) <- get
   let funName = getNameFromIdent ident
   function <- getValue funName
   case function of
-    VFun (fargs, blck, t) fenv -> do
+    VFun (fargs, blck, _) fenv -> do
       setFunArgsAndEnv fargs args fenv
-      -- modify (\(_, st) -> (fenv, st))
-
       rtrnValue <- evalFBlock blck
       modify (\(_, st) -> (env, st))
       return rtrnValue
     PrintInteger -> do
-      val <- evalExpr (head args)
+      val <- evalExpr (myHead args)
       liftIO $ print $ getIntFromVal val
       return $ VInt 0
     PrintString -> do
-      val <- evalExpr (head args)
+      val <- evalExpr (myHead args)
       liftIO $ print $ getStringFromVal val
       return $ VStr ""
     PrintBoolean -> do
-      val <- evalExpr (head args)
+      val <- evalExpr (myHead args)
       liftIO $ print $ getBoolFromVal val
       return $ VBool False
+    _ -> error "Expected function"
 
 evalExpr (ExpNeg _ e) = do
   val <- evalExpr e
@@ -214,6 +215,6 @@ evalExpr (ExpOr _ e1 e2) = do
   let b2 = getBoolFromVal val2
   return $ VBool (b1 || b2)
 
-evalExpr (ExpLambda _ args t blck) = do  -- todo
-  env <- get
-  return $ VInt 0
+evalExpr (ExpLambda _ args t blck) = do
+  (env, _) <- get
+  return $ VFun (args, blck, t) env

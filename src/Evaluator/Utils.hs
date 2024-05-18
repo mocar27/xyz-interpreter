@@ -89,6 +89,7 @@ setArg (ArgVal _ _ (Ident name)) val = do
   addVariableLocToEnv name loc
   storeVariableValue loc val 
 setArg (ArgRef _ _ (Ident name)) (VLoc loc) = addVariableLocToEnv name loc
+setArg _ _ = error "Expected variable"
 
 -- | Helper functions
 getNameFromIdent :: Ident -> String
@@ -106,7 +107,7 @@ getIntFromVal _ = error "Expected Integer value"
 
 getStringFromVal :: Value -> String
 getStringFromVal (VStr s) = s
-getStringFromVal t = error "Expected String value"
+getStringFromVal _ = error "Expected String value"
 
 getBoolFromVal :: Value -> Bool
 getBoolFromVal (VBool b) = b
@@ -133,3 +134,7 @@ defaultValue (Integer _) = VInt 0
 defaultValue (String _) = VStr ""
 defaultValue (Boolean _) = VBool False
 defaultValue _ = error "Cannot create default value for non-primitive type"
+
+myHead :: [a] -> a
+myHead [] = error "Empty list"
+myHead (x : _) = x
