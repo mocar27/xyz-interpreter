@@ -19,9 +19,8 @@ Integer function main() {
         while (x < 100) {
             printInteger(x);
             x = x + 1;
-
             printString(test1());
-            // printString(test2());
+            printString(test2());
         }
         Integer y = 30;
         while (y > 20) {
@@ -33,7 +32,7 @@ Integer function main() {
     printInteger(x);
 
 
-    // printString(test1());
+    printString(test1());
     // printString(test2());
     return 0;
 }

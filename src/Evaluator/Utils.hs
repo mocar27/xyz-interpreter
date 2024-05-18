@@ -106,7 +106,7 @@ getIntFromVal _ = error "Expected Integer value"
 
 getStringFromVal :: Value -> String
 getStringFromVal (VStr s) = s
-getStringFromVal t = error ("Expected String value" ++ show t)
+getStringFromVal t = error "Expected String value"
 
 getBoolFromVal :: Value -> Bool
 getBoolFromVal (VBool b) = b

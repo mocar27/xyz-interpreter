@@ -107,7 +107,7 @@ evalItems t ((Init _ v e) : items) = do
   evalItems t items
 
 -- | Evaluate arguments.
-evalExprArg :: Arg -> Expr -> Evaluator Value
+evalExprArg :: Arg -> Expr -> Evaluator Value           -- todo
 evalExprArg (ArgVal _ t _) e = evalExpr e
 evalExprArg (ArgRef _ t (Ident name)) e = do
   loc <- getLocOfVar name
@@ -132,7 +132,7 @@ evalExpr (ExpApp _ ident args) = do  -- todo
   (env, s) <- get
   let funName = getNameFromIdent ident
   function <- getValue funName
-  _ <- case function of
+  case function of
     VFun (fargs, blck, t) fenv -> do
       setFunArgsAndEnv fargs args fenv
       -- modify (\(_, st) -> (fenv, st))
@@ -140,7 +140,6 @@ evalExpr (ExpApp _ ident args) = do  -- todo
       rtrnValue <- evalFBlock blck
       modify (\(_, st) -> (env, st))
       return rtrnValue
-
     PrintInteger -> do
       val <- evalExpr (head args)
       liftIO $ print $ getIntFromVal val
@@ -153,8 +152,6 @@ evalExpr (ExpApp _ ident args) = do  -- todo
       val <- evalExpr (head args)
       liftIO $ print $ getBoolFromVal val
       return $ VBool False
-    _ -> error "Expected function, but got something else instead."
-  return $ VInt 0
 
 evalExpr (ExpNeg _ e) = do
   val <- evalExpr e
