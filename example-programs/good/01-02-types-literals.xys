@@ -1,0 +1,7 @@
+Integer function main() {
+    printInteger(5);
+    printString("five");
+    printBoolean(true);
+
+    return 0;
+}

@@ -20,10 +20,6 @@ It is not permitted to create Void function. Function must have a type and must 
 
 For evaluator to be successful in given input program there has to be `main` function defined.
 
-Reference work in general, just we have to have prefix 'var' in the function argument. 
-(The only time it does not work, is if you pass actually just a number, eg. 1, 2, 3... etc., not able to pass const) (My bad :( )
-Rest of the types passing work as intended.
-
 ## Grammar
 
 Hello

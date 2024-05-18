@@ -4,9 +4,10 @@ module Interpreter.Interpreter ( run, runFile ) where
 
 import TypeChecker.TypeChecker
 import Evaluator.Evaluator
+import Evaluator.Utils 
 import ParserLexer.ParXyzGrammar   ( pProgram, myLexer )
 
-import Prelude                     ( Either(..), String, (++), IO, (>>=), putStrLn, FilePath, readFile )
+import Prelude                     ( Either(..), String, (++), IO, (>>=), show, putStrLn, FilePath, readFile )
 
 import System.Exit                 ( exitSuccess, exitFailure )
 
@@ -16,21 +17,18 @@ runFile f = readFile f >>= run
 run :: String -> IO ()
 run s = case prog of
   Left err -> do
-    putStrLn "\nParser failed!\n"
-    putStrLn (err ++ "\n")
+    putStrLn ("\nParser failed!\n\n" ++ err ++ "\n")
     exitFailure
   Right tree -> do
     case runTypeChecker tree of
       Left err -> do
-        putStrLn "\nTypeChecker failed!\n"
-        putStrLn (err ++ "\n")
+        putStrLn ("\nTypeChecker failed!\n\n" ++ err ++ "\n")
         exitFailure
       Right _ -> do
         programResult <- runEvaluator tree
         case programResult of
           Left err -> do
-            putStrLn "\nEvaluator failed!\n"
-            putStrLn (err ++ "\n")
+            putStrLn ("\nEvaluator failed!\n\n" ++ err ++ "\n")
             exitFailure
           Right _ -> do
             exitSuccess

@@ -16,13 +16,13 @@ Konkretny opis języka z tabelki cech:
    - if {Wyrażenie Boolean-owskie} Block else Block;
    * Język wymusza po instrukcjach while, if oraz if else podania koniecznie instrukcji blokowej,
      która jest zawarta w nawiasy klamrowe: '{' oraz '}'.
-6. Język pozwala na tworzenie funkcji oraz procedur w następujący sposób:
+6. Język pozwala na tworzenie funkcji w następujący sposób:
    - {Typ funkcji} `function` {Nazwa funkcji} ({Lista argumentów}) Block;
 7. W języku są dwie możliwości przesyłania argumentów do funkcji:
    - przez wartość, wtedy należy jako argument do funkcji wpisać: {Typ argumentu} {Nazwa argumentu};
    - przez zmienną, wtedy należy jako argument do funkcji wpisać: `var` {Typ argumentu} {Nazwa argumentu};
-9. W języku występuje statyczne wiązanie, stworzenie zagnieżdżonej procedury ze zmienną lokalną nazwaną tak samo jak zmienna 
-   w procedurze zewnętrzenej nadpisze ją lokalnie i podczas wołania tej zmiennej wartość w danym kontekście
+9. W języku występuje statyczne wiązanie, stworzenie zagnieżdżonej funkcji ze zmienną lokalną nazwaną tak samo jak zmienna 
+   w funkcji zewnętrzenej nadpisze ją lokalnie i podczas wołania tej zmiennej wartość w danym kontekście
    ma większy priorytet nad wartością w kontekście zewnętrznym (W razie potrzeb zostanie rozszerzone o zmienne globalne). 
 10. Interpreter obsługuje błędy wykonania odpowiednim komunikatem oraz przy wystąpieniu takiego błędu, kończy działanie.
 11. Funkcje, opisane jak w punkcie (6.) przyjmują listę dowolnych argumentów obsługiwanych typów 
