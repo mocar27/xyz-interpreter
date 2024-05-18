@@ -47,8 +47,8 @@ initialStore = Map.fromList [
 newLoc :: Store -> Integer
 newLoc = toInteger . size
 
-addVariableToEnv :: Var -> Loc -> Evaluator ()
-addVariableToEnv var loc = modifyEnv (Map.insert var loc)
+addVariableLocToEnv :: Var -> Loc -> Evaluator ()
+addVariableLocToEnv var loc = modifyEnv (Map.insert var loc)
 
 storeVariableValue :: Loc -> Value -> Evaluator ()
 storeVariableValue loc val = modifyStore (Map.insert loc val)
@@ -77,6 +77,18 @@ getValueFromLoc loc = do
   case Map.lookup loc store of
     Just val -> return val
     Nothing -> throwError $ "Location " ++ show loc ++ " not found"
+
+getArgLoc :: Expr -> Evaluator Loc
+getArgLoc (ExpVar _ var) = getLocOfVar (getNameFromIdent var)
+getArgLoc _ = error "Expected variable"
+
+setArg :: Arg -> Value -> Evaluator ()
+setArg (ArgVal _ _ (Ident name)) val = do
+  (_, s) <- get
+  let loc = newLoc s
+  addVariableLocToEnv name loc
+  storeVariableValue loc val 
+setArg (ArgRef _ _ (Ident name)) (VLoc loc) = addVariableLocToEnv name loc
 
 -- | Helper functions
 getNameFromIdent :: Ident -> String

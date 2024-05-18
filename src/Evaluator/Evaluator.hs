@@ -3,6 +3,9 @@ module Evaluator.Evaluator where
 import Evaluator.Utils
 import ParserLexer.AbsXyzGrammar
 
+import Prelude                    hiding ( foldr )
+import Data.Map                   as Map
+
 import Control.Monad
 import Control.Monad.State
 import Control.Monad.Except
@@ -30,7 +33,7 @@ evalFBlock (FnBlock _ stmts rtrn) = do
 
 -- | Evaluate a return statement.
 evalReturn :: Rtrn -> Evaluator ()
-evalReturn (Ret _ e) = do 
+evalReturn (Ret _ e) = do
   _ <- evalExpr e
   return ()
 
@@ -62,14 +65,14 @@ evalStmt (IfElse _ e blck1 blck2) = do
   val <- evalExpr e
   (env, _) <- get
   let cond = getBoolFromVal val
-  if cond then do 
-    evalBlock blck1 
+  if cond then do
+    evalBlock blck1
     modify (\(_, st) -> (env, st))
-  else do 
+  else do
     evalBlock blck2
     modify (\(_, st) -> (env, st))
 
-evalStmt (While p e blck) = do 
+evalStmt (While p e blck) = do
   val <- evalExpr e
   (env, _) <- get
   let cond = getBoolFromVal val
@@ -80,8 +83,7 @@ evalStmt (FunctionDef _ t ident args blck) = do
   (env, s) <- get
   let var = getNameFromIdent ident
   let newL = newLoc s
-  addVariableToEnv var newL
-  -- (funEnv, _) <- get          -- todo check if this is needed, whether use env or funEnv i let fun = 
+  addVariableLocToEnv var newL
   let fun = VFun (args, blck, t) env
   storeVariableValue newL fun
 
@@ -95,20 +97,29 @@ evalItems _ [] = return ()
 evalItems t ((NoInit _ v) : items) = do
   (_, s) <- get
   let newL = newLoc s
-  addVariableToEnv (getNameFromIdent v) newL
+  addVariableLocToEnv (getNameFromIdent v) newL
   storeVariableValue newL (defaultValue t)
   evalItems t items
 evalItems t ((Init _ v e) : items) = do
   val <- evalExpr e
   (_, s) <- get
   let newL = newLoc s
-  addVariableToEnv (getNameFromIdent v) newL
+  addVariableLocToEnv (getNameFromIdent v) newL
   storeVariableValue newL val
   evalItems t items
 
 -- | Evaluate arguments.
--- evalExprArg :: Env -> Expr -> Value -- todo
--- evalExprArg env e = evalStateT (evalExpr e) (env, initialStore)
+evalExprArg :: Arg -> Expr -> Evaluator Value
+evalExprArg (ArgVal _ t _) e = evalExpr e
+evalExprArg (ArgRef _ t (Ident name)) e = do
+  loc <- getLocOfVar name
+  return $ VLoc loc
+
+setFunArgsAndEnv :: [Arg] -> [Expr] -> Env -> Evaluator ()
+setFunArgsAndEnv fargs es fenv = do
+  vals <- zipWithM evalExprArg fargs es
+  modifyEnv (const fenv)
+  forM_ (zip fargs vals) $ uncurry setArg
 
 -- | Evaluate an expression.
 evalExpr :: Expr -> Evaluator Value
@@ -125,10 +136,13 @@ evalExpr (ExpApp _ ident args) = do  -- todo
   function <- getValue funName
   case function of
     VFun (fargs, blck, t) fenv -> do
-      -- args
-      rtrnVal <- evalFBlock blck
-      modify (\(_, st) -> (env, st)) -- fenv or env?
-      return rtrnVal
+      setFunArgsAndEnv fargs args fenv
+      -- modify (\(_, st) -> (fenv, st))
+
+      rtrnValue <- evalFBlock blck
+      modify (\(_, st) -> (env, st))
+      return rtrnValue
+
     PrintInteger -> do
       val <- evalExpr (head args)
       liftIO $ print $ getIntFromVal val
