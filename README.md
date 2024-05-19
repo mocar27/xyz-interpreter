@@ -14,7 +14,19 @@ the static type checking.
 
 ## Usage
 
-Hello
+If you are in the main directory, so actually in which this `README.md` file is created, simply write 
+
+```shell
+make
+```
+
+and the project will compile to the `interpreter` file ready to use:
+
+```shell
+./interpreter <provide file directory here (optional, otherwise it will parse program actively providing in the input)>
+```
+
+Example of `bad` and `good` program examples are provided in the directory `example-programs/bad/` and `example-programs/good/` respectively.
 
 ## Files
 
