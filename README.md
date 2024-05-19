@@ -155,7 +155,7 @@ comment    "//" ;
 
 comment    "/*" "*/" ;
 
-``
+```
 
 ## Sources used during programming
 
@@ -169,4 +169,4 @@ comment    "/*" "*/" ;
 
 ## Concluding remarks
 
-*None*
+*Enjoy*
