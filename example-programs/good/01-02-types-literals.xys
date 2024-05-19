@@ -1,6 +1,7 @@
 Integer function main() {
-    printInteger(5);
-    printString("five");
+    
+    printInteger(1);
+    printString("one");
     printBoolean(true);
 
     return 0;

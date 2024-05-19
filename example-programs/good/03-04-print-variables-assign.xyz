@@ -1,0 +1,28 @@
+Integer function main() {
+    
+    Integer x, y;
+    String a = "firstString", b;
+    Boolean t = true, f = false;
+
+    x = 2;
+    y = x + 1;
+
+    printInteger(x);
+    printInteger(y);
+    printInteger(x + 10);
+    printInteger(y - 3);
+
+
+    printString(b);
+
+    b = a;
+    
+    printString(b + b);
+
+    t = !t;
+
+    printBoolean(t);
+    printBoolean(!f);
+
+    return 0;
+}

@@ -1,0 +1,11 @@
+Integer x = 5;
+
+Integer function main() {
+
+    printInteger(x); 
+    
+    Integer x = 10;
+    printInteger(x);
+
+    return 0;
+}

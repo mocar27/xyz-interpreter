@@ -1,0 +1,15 @@
+Integer function main() {
+    
+    Boolean yes = true;
+    Boolean no = false;
+
+    if(yes) {
+       printBoolean(yes);
+    }
+
+    if(!no) {
+        printBoolean(no); 
+    }
+
+    return 0;
+}

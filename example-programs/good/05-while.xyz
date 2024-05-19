@@ -1,0 +1,13 @@
+Integer function main() {
+    
+    Integer x = 5;
+
+    while(x < 10) {
+        x + 1; 
+        x = x + 1;
+
+        printInteger(x);
+    }
+
+    return 0;
+}

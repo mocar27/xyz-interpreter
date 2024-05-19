@@ -1,0 +1,30 @@
+Integer function main() {
+    
+    printString("Integers:");
+    printBoolean(2 < 3);
+    printBoolean(3 <= 3);
+    printBoolean(2 > 3);
+    printBoolean(2 >= 3);
+    printBoolean(2 == 3);
+    printBoolean(2 != 3);
+
+    printString("Strings:");
+    printBoolean("two" < "three");
+    printBoolean("three" <= "three");
+    printBoolean("two" > "three");
+    printBoolean("two" >= "three");
+    printBoolean("two" == "three");
+    printBoolean("two" != "three");
+
+    printString("Boolean:");
+    printBoolean(true < false);
+    printBoolean(false <= false);
+    printBoolean(true > false);
+    printBoolean(true >= false);
+    printBoolean(true == false);
+    printBoolean(true != false);
+
+    return 0;
+    
+    // < <= > >= == !=
+}

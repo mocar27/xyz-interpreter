@@ -1,0 +1,27 @@
+Integer function testReturnInteger() {
+    Integer a = 500;
+    return a;
+}
+
+String function testReturnString() {
+    String a = "fivehundred";
+    return a;
+}
+
+Boolean function testReturnBoolean() {
+    Boolean a = true;
+    return a;
+}
+
+Integer function main() {
+
+    Integer x = testReturnInteger(); 
+    String s =  testReturnString();
+    Boolean b = testReturnBoolean();
+
+    if(x == 500 && b) {
+        printString(s);
+    }
+
+    return 0;
+}

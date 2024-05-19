@@ -90,13 +90,13 @@ typeCheckStmt (While _ e blck) = do
 
 typeCheckStmt (FunctionDef _ t idnt args blck) = do
   let functionType = omitPosition t
+  addFunction idnt functionType args
   env <- get
   forM_ args $ \a -> case a of
     ArgVal _ tp _ -> modify (Map.insert (getArgName a) (omitPosition tp))
     ArgRef _ tp _ -> modify (Map.insert (getArgName a) (omitPositionRef tp))
   typeCheckFunctionBlock functionType blck
   put env
-  addFunction idnt functionType args
 
 typeCheckStmt (StmtExp _ e) = do
   _ <- typeCheckExpr e

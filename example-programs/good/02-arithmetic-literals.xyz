@@ -1,4 +1,17 @@
 Integer function main() {
-    printInteger();
-    printInte
+    
+    printInteger(2 + 3);
+    printInteger(2 - 3);
+    printInteger(2 * 3);
+    printInteger(2 / 3);
+    printInteger(2 % 3);
+    printInteger(- (2 * 3));
+
+    printString("two" + "three");
+    
+    printBoolean(!false);
+
+    return 0;
+    
+    // +-*/%!
 }

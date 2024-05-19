@@ -1,0 +1,12 @@
+Integer function test1() {
+    Integer function test2() {
+        return 42;
+    }
+
+    return test2();
+}
+
+Integer function main() {
+    printInteger(test1());
+    return 0;
+}

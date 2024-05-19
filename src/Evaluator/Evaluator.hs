@@ -79,10 +79,11 @@ evalStmt (While p e blck) = do
   modify (\(_, st) -> (env, st))
 
 evalStmt (FunctionDef _ t ident args blck) = do
-  (env, s) <- get
+  (_, s) <- get
   let var = getNameFromIdent ident
   let newL = newLoc s
   addVariableLocToEnv var newL
+  (env, _) <- get
   let fun = VFun (args, blck, t) env
   storeVariableValue newL fun
 

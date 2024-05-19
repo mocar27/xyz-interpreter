@@ -7,19 +7,21 @@ Integer function main() {
     Boolean no = false;
 
     if(yes && no) {
-       yes;
+       printBoolean(yes);
     }
 
     if(yes || no) {
         Integer t = 2;
         x = x * x;
-        printInteger(t);
+        printInteger(t);   // t = 2
     }
     else {
         Integer t = 3;
         printInteger(t);
     }
-    printInteger(t);
+
+    printInteger(t);       // t = 5
+    printInteger(x);       // x = 5
 
     return 0;
 }

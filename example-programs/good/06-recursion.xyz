@@ -1,0 +1,19 @@
+Integer function fib(Integer n) {
+    if (n <= 0) {
+        // return 0;
+    }
+
+    if (n == 1) {
+        // return 1;
+    }
+    
+    printString("Infinite recursion");
+    return fib(n - 1) + fib(n - 2);
+}
+
+Integer function main() {
+    
+    printInteger(fib(10));
+
+    return 0;
+}
