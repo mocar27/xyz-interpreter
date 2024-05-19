@@ -1,0 +1,5 @@
+Integer main () {
+    Integer x = 5;
+
+    return 0;
+}

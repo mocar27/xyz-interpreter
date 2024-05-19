@@ -1,0 +1,15 @@
+Integer function test(var String x, Boolean y, Integer z) {
+    String s = "someString";
+    x = "test";
+    y = true;
+    z = 5;
+
+    return 0;
+}
+
+Integer function main() {
+    String s = "someString";
+    test(s, true);
+
+    return 0;
+}

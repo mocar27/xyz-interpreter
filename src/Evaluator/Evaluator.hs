@@ -114,7 +114,7 @@ evalExprArg (ArgVal _ _ _) e = evalExpr e
 evalExprArg (ArgRef _ _ _) (ExpVar _ (Ident var))= do
   loc <- getLocOfVar var
   return $ VLoc loc
-evalExprArg _ _ = error "Expected variable"
+evalExprArg _ _ = throwError "Function call error: Expected reference but got value (probably const) instead."
 
 setFunArgsAndEnv :: [Arg] -> [Expr] -> Env -> Evaluator ()
 setFunArgsAndEnv fargs es fenv = do
@@ -153,7 +153,7 @@ evalExpr (ExpApp _ ident args) = do
       val <- evalExpr (myHead args)
       liftIO $ print $ getBoolFromVal val
       return $ VBool False
-    _ -> error "Expected function"
+    _ -> throwError "Expected function"
 
 evalExpr (ExpNeg _ e) = do
   val <- evalExpr e
@@ -173,7 +173,7 @@ evalExpr (ExpMul _ e1 op e2) = do
   case op of
     Multi _ -> return $ VInt (i1 * i2)
     Div _ -> do
-      if i2 == 0 then error "Multiplication error: Division by zero"
+      if i2 == 0 then throwError "Multiplication error: Division by zero"
       else return $ VInt (i1 `div` i2)
     Mod _ -> return $ VInt (i1 `mod` i2)
 
@@ -185,9 +185,9 @@ evalExpr (ExpAdd _ e1 op e2) = do
   case op of
     Plus _ -> if v1 && v2 then return $ VInt (getIntFromVal val1 + getIntFromVal val2)
               else if isString val1 && isString val2 then return $ VStr (getStringFromVal val1 ++ getStringFromVal val2)
-              else error "Addition Error: expected types were Integer () and Integer (), or String () and String (), but got something else instead."
+              else throwError "Addition Error: expected types were Integer () and Integer (), or String () and String (), but got something else instead."
     Minus _ -> if v1 && v2 then return $ VInt (getIntFromVal val1 - getIntFromVal val2)
-               else error "Subtraction Error: expected types were Integer () and Integer (), but got something else instead."
+               else throwError "Subtraction Error: expected types were Integer () and Integer (), but got something else instead."
 
 evalExpr (ExpRel _ e1 op e2) = do
   val1 <- evalExpr e1

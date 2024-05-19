@@ -1,6 +1,5 @@
 Integer function main() {
-
-    String x = 5;
+    test1();
 
     return 0;
 }

@@ -1,0 +1,10 @@
+Integer function main() {
+
+    if(true) {
+        Integer x = 5;
+    }
+
+    printInteger(x);
+
+    return 0;
+}

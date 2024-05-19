@@ -1,6 +1,0 @@
-Integer function main() {
-
-    String x = "test", y = 5;
-
-    return 0;
-}

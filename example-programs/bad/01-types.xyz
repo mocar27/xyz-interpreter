@@ -1,0 +1,8 @@
+Integer function main() {
+
+    String x = 5;
+    Integer s = "five";
+    Boolean b = 5;
+    
+    return 0;
+}

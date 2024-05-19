@@ -1,0 +1,17 @@
+Integer function main() {
+
+    Integer a;
+    Integer b = 3;
+    Integer c = 4;
+    Integer d, e = 5;
+
+    String seven = "seven";
+    String eight = "eight";
+
+    Boolean t = true;
+    Boolean f = false;
+    
+    t < seven;
+
+    return 0;
+}

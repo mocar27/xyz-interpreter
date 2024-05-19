@@ -1,0 +1,14 @@
+Integer function main() {
+    
+    Integer a = 5;
+    String a = "five";
+
+    Integer function test() {
+        return a;
+    }
+
+    printInteger(test());
+    printString(a);
+
+    return 0;
+}

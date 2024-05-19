@@ -1,0 +1,6 @@
+Integer function main() {
+    Integer x = 5;
+    Integer y = x / 0;
+
+    return 0;
+}

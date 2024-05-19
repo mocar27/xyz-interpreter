@@ -1,9 +1,10 @@
 Integer function main() {
 
-    String x = "test", y = "siema";
+    String x = "test", y = "someString";
     Integer z = 5;
 
     x = y;
+    printString(x);
     
     if (x) {
         y;

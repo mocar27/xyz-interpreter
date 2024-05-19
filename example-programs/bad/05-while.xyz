@@ -5,7 +5,7 @@ Integer function main() {
     Boolean t = true;
     x = y;
     
-    while (t) {
+    while (z) {
         z = y;
     }
 

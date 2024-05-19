@@ -1,0 +1,12 @@
+Integer function main() {
+
+    Integer x = 5;
+    String s = "five";
+    Boolean b = true;
+    
+    // printInteger(s);
+    printString(s);
+    printBoolean(s);
+
+    return 0;
+}
