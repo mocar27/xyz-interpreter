@@ -1,19 +1,23 @@
 Integer function fib(Integer n) {
+    Integer result = -1;
     if (n <= 0) {
-        // return 0;
+        result = 0 ;
     }
 
     if (n == 1) {
-        // return 1;
+        result = 1;
+    }
+
+    if(result == -1) {
+        result = fib(n - 1) + fib(n - 2);
     }
     
-    printString("Infinite recursion");
-    return fib(n - 1) + fib(n - 2);
+    // printString("Infinite recursion");
+    return result;
 }
 
 Integer function main() {
     
     printInteger(fib(10));
-
     return 0;
 }
