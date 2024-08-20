@@ -17,6 +17,7 @@ license-file:   LICENSE
 build-type:     Simple
 extra-source-files:
     README.md
+    CHANGELOG.md
 
 source-repository head
   type: git
@@ -24,6 +25,9 @@ source-repository head
 
 library
   exposed-modules:
+      Evaluator.Evaluator
+      Evaluator.Utils
+      Interpreter.Interpreter
       ParserLexer.AbsXyzGrammar
       ParserLexer.ErrM
       ParserLexer.LexXyzGrammar
@@ -32,9 +36,6 @@ library
       ParserLexer.SkelXyzGrammar
       TypeChecker.TypeChecker
       TypeChecker.Utils
-      Evaluator.Evaluator
-      Evaluator.Utils
-      Interpreter.Interpreter
   other-modules:
       Paths_xyz_interpreter
   autogen-modules:

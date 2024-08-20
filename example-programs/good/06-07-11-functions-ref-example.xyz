@@ -1,0 +1,20 @@
+Integer function funVar(var Integer  x) {
+  x = x + 1;
+  return x+101;
+}
+
+Integer function funVal(Integer(Integer) f){
+  Integer z = 110;
+  printInteger(f(z));
+  printInteger(f(z+z)); // bez tej linii działa, z nią Evaluator failed!
+  printInteger(z);
+  return z;
+}
+
+
+Integer function main(){
+    Integer  z = 1;
+    printInteger(funVal(funVar));
+    printInteger(funVar(z));
+    return 0;
+}
