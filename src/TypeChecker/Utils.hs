@@ -69,17 +69,13 @@ getFunctionArgTypesFromEnv (Ident name) = do
     Just _ -> throwError $ "Variable with name " ++ name ++ " is not a function"
     Nothing -> throwError $ "Function with name " ++ name ++ " not declared"
 
+throwPosError :: BNFC'Position -> String -> TypeChecker a
+throwPosError (Just (l, c)) msg = throwError $ show l ++ ":" ++ show c ++ " " ++ msg
+throwPosError Nothing msg = throwError msg
+
 -- | Helper functions for the type checker.
 getNameFromIdent :: Ident -> String
 getNameFromIdent (Ident var) = var
-
-getOperationType :: RelOp' BNFC'Position -> String
-getOperationType (LThan _) = "<"
-getOperationType (Leq _) = "<="
-getOperationType (GThan _) = ">"
-getOperationType (Geq _) = ">="
-getOperationType (Eq _) = "=="
-getOperationType (NEq _) = "!="
 
 getArgName :: Arg -> String
 getArgName (ArgVal _ _ name) = getNameFromIdent name
@@ -89,20 +85,14 @@ getArgType :: Arg -> TType
 getArgType (ArgVal _ t _) = omitPosition t
 getArgType (ArgRef _ t _) = omitPositionRef t
 
-getTypeFromRef :: TType -> TType
-getTypeFromRef (RefString _) = String ()
-getTypeFromRef (RefInteger _) = Integer ()
-getTypeFromRef (RefBoolean _) = Boolean ()
-getTypeFromRef t = getTypeFromType t
-
-getTypeFromType :: TType -> TType
-getTypeFromType (RefString _) = String ()
-getTypeFromType (RefInteger _) = Integer ()
-getTypeFromType (RefBoolean _) = Boolean ()
-getTypeFromType (Integer _) = Integer ()
-getTypeFromType (String _) = String ()
-getTypeFromType (Boolean _) = Boolean ()
-getTypeFromType (Function _ retType argTypes) = Function () (getTypeFromType retType) (fmap getTypeFromRef argTypes)
+getTypeFrom :: TType -> TType
+getTypeFrom (RefString _) = String ()
+getTypeFrom (RefInteger _) = Integer ()
+getTypeFrom (RefBoolean _) = Boolean ()
+getTypeFrom (Integer _) = Integer ()
+getTypeFrom (String _) = String ()
+getTypeFrom (Boolean _) = Boolean ()
+getTypeFrom (Function _ retType argTypes) = Function () (getTypeFrom retType) (fmap getTypeFrom argTypes)
 
 omitPositionRef :: Type' BNFC'Position -> TType
 omitPositionRef (Integer _) = RefInteger ()

@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Evaluator.Utils where
 
 import ParserLexer.AbsXyzGrammar
@@ -27,7 +28,27 @@ data Value
   | PrintInteger
   | PrintString
   | PrintBoolean
-  deriving (C.Eq, C.Show)
+  deriving (C.Show)
+
+instance Ord Value where
+  (VInt a) < (VInt b) = a < b
+  (VStr a) < (VStr b) = a < b
+  (VBool a) < (VBool b) = a < b
+  (VInt a) <= (VInt b) = a <= b
+  (VStr a) <= (VStr b) = a <= b
+  (VBool a) <= (VBool b) = a <= b
+  (VInt a) > (VInt b) = a > b
+  (VStr a) > (VStr b) = a > b
+  (VBool a) > (VBool b) = a > b
+  (VInt a) >= (VInt b) = a >= b
+  (VStr a) >= (VStr b) = a >= b
+  (VBool a) >= (VBool b) = a >= b
+
+instance Eq Value where
+  (VInt a) == (VInt b) = a == b
+  (VStr a) == (VStr b) = a == b
+  (VBool a) == (VBool b) = a == b
+  _ == _ = False
 
 -- | Environment and Store mappings and functions
 initialEnv :: Env
@@ -58,6 +79,22 @@ modifyStore f = modify (\(env, store) -> (env, f store))
 
 modifyEnv :: (Env -> Env) -> Evaluator ()
 modifyEnv f = modify (\(env, store) -> (f env, store))
+
+getEnv :: Evaluator Env
+getEnv = do 
+  (env, _) <- get
+  return env
+
+putEnv :: Env -> Evaluator ()
+putEnv env = modify (\(_, store) -> (env, store))
+
+getStore :: Evaluator Store
+getStore = do
+  (_, store) <- get
+  return store
+
+putStore :: Store -> Evaluator ()
+putStore store = modify (\(env, _) -> (env, store))
 
 getValue :: Var -> Evaluator Value
 getValue var = do
@@ -91,15 +128,13 @@ setArg (ArgVal _ _ (Ident name)) val = do
 setArg (ArgRef _ _ (Ident name)) (VLoc loc) = addVariableLocToEnv name loc
 setArg _ _ = error "Expected variable"
 
+throwPosError :: BNFC'Position -> String -> Evaluator a
+throwPosError (Just (l, c)) msg = throwError $ show l ++ ":" ++ show c ++ " " ++ msg
+throwPosError Nothing msg = throwError msg
+
 -- | Helper functions
 getNameFromIdent :: Ident -> String
 getNameFromIdent (Ident var) = var
-
-getValueFromVal :: Value -> Either (Either String Integer) Bool
-getValueFromVal (VInt i) = Left (Right i)
-getValueFromVal (VStr s) = Left (Left s)
-getValueFromVal (VBool b) = Right b
-getValueFromVal _ = error "Expected Integer, String or Boolean value"
 
 getIntFromVal :: Value -> Integer
 getIntFromVal (VInt i) = i

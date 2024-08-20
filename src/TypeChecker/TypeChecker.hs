@@ -2,9 +2,10 @@ module TypeChecker.TypeChecker where
 
 import TypeChecker.Utils
 import ParserLexer.AbsXyzGrammar
+import ParserLexer.PrintXyzGrammar ( printTree )
 
-import Data.Map                  as Map
-import Data.Functor.Identity     ( runIdentity )
+import Data.Map                    as Map
+import Data.Functor.Identity       ( runIdentity )
 
 import Control.Monad
 import Control.Monad.State
@@ -20,7 +21,10 @@ typeCheckProgram (MyProgram _ stmts) = typeCheckStmts stmts
 
 -- | Type check a block.
 typeCheckBlock :: Block -> TypeChecker ()
-typeCheckBlock (StmtBlock _ stmts) = typeCheckStmts stmts
+typeCheckBlock (StmtBlock _ stmts) = do 
+  env <- get
+  typeCheckStmts stmts
+  put env
 
 -- | Type check a function block.
 typeCheckFunctionBlock :: TType -> FunBlock -> TypeChecker ()
@@ -30,10 +34,10 @@ typeCheckFunctionBlock t (FnBlock _ stmts rtrn) = do
 
 -- | Type check a return statement.
 typeCheckReturn :: TType -> Rtrn -> TypeChecker ()
-typeCheckReturn eT (Ret _ e) = do
+typeCheckReturn eT (Ret p e) = do
   rtrnType <- typeCheckExpr e
-  unless (rtrnType == eT)
-    $ throwError $ "Return type mismatch: Function is type " ++ show eT ++ ", but return is type " ++ show rtrnType
+  unless (rtrnType == eT) $
+    throwPosError p ("Return type mismatch: Function is type " ++ printTree eT ++ ", but return is type " ++ printTree rtrnType)
 
 -- | Type check statements.
 typeCheckStmts :: [Stmt] -> TypeChecker ()
@@ -47,56 +51,43 @@ typeCheckStmt (Empty _) = return ()
 
 typeCheckStmt (Decl _ t items) = do
   let tempType = omitPositionRef t
-  let declType = getTypeFromType tempType
+  let declType = getTypeFrom tempType
   typeCheckItems declType items
   addVariables declType items
 
-typeCheckStmt (Assign _ var e) = do
+typeCheckStmt (Assign p var e) = do
   expectedType <- getVarFromEnv var
-  let expectedTypeFromRef = getTypeFromRef expectedType
+  let expectedTypeFromRef = getTypeFrom expectedType
   actualType <- typeCheckExpr e
   unless (actualType == expectedType || actualType == expectedTypeFromRef)
-    $ throwError $ "Type mismatch: attempt to assign type " ++ show actualType ++ " to type " ++ show expectedType
+    $ throwPosError p ("Type mismatch: attempt to assign type " ++ printTree actualType ++ " to type " ++ printTree expectedType)
 
-typeCheckStmt (If _ e blck) = do
+typeCheckStmt (If p e blck) = do
   tempType <- typeCheckExpr e
-  let conditionType = getTypeFromType tempType
+  let conditionType = getTypeFrom tempType
   unless (conditionType == Boolean ())
-    $ throwError $ "If condition is " ++ show conditionType ++ ", expected was Boolean ()"
-  env <- get
+    $ throwPosError p ("If condition is " ++ printTree conditionType ++ ", expected was Boolean")
   typeCheckBlock blck
-  put env
 
-typeCheckStmt (IfElse _ e blck1 blck2) = do
+typeCheckStmt (IfElse p e blck1 blck2) = do
   tempType <- typeCheckExpr e
-  let conditionType = getTypeFromType tempType
+  let conditionType = getTypeFrom tempType
   unless (conditionType == Boolean ())
-    $ throwError $ "If condition is " ++ show conditionType ++ ", expected was Boolean ()"
-  envIf <- get
+    $ throwPosError p ("If condition is " ++ printTree conditionType ++ ", expected was Boolean")
   typeCheckBlock blck1
-  put envIf
-  envElse <- get
   typeCheckBlock blck2
-  put envElse
 
-typeCheckStmt (While _ e blck) = do
+typeCheckStmt (While p e blck) = do
   tempType <- typeCheckExpr e
-  let conditionType = getTypeFromType tempType
+  let conditionType = getTypeFrom tempType
   unless (conditionType == Boolean ())
-    $ throwError $ "While condition is " ++ show conditionType ++ ", expected was Boolean ()"
-  env <- get
+    $ throwPosError p ("While condition is " ++ printTree conditionType ++ ", expected was Boolean")
   typeCheckBlock blck
-  put env
 
 typeCheckStmt (FunctionDef _ t idnt args blck) = do
   let functionType = omitPosition t
   addFunction idnt functionType args
-  env <- get
-  forM_ args $ \a -> case a of
-    ArgVal _ tp _ -> modify (Map.insert (getArgName a) (omitPosition tp))
-    ArgRef _ tp _ -> modify (Map.insert (getArgName a) (omitPositionRef tp))
-  typeCheckFunctionBlock functionType blck
-  put env
+  processFunction t args blck
 
 typeCheckStmt (StmtExp _ e) = do
   _ <- typeCheckExpr e
@@ -111,27 +102,27 @@ typeCheckItems eT (item : items) = do
 
 typeCheckItem :: TType -> Item -> TypeChecker ()
 typeCheckItem _ (NoInit _ _) = return ()
-typeCheckItem eT (Init _ var e) = do
+typeCheckItem eT (Init p var e) = do
   let variableName = getNameFromIdent var
   actualType <- typeCheckExpr e
   unless (actualType == eT)
-    $ throwError $ "Type mismatch variable " ++ show variableName ++ ": " ++ show actualType ++ " cannot be assigned to " ++ show eT
+    $ throwPosError p ("Type mismatch variable " ++ show variableName ++ ": " ++ printTree actualType ++ " cannot be assigned to " ++ printTree eT)
 
 -- | Type check arguments.
-typeCheckArgs :: [TType] -> [TType] -> TypeChecker ()
-typeCheckArgs [] [] = return ()
-typeCheckArgs [] _ = throwError "Function application Error: too many arguments"
-typeCheckArgs _ [] = throwError "Function application Error: too few arguments"
-typeCheckArgs (fArg : funArgs) (gArg : givenArgs) = do
-  typeCheckArg fArg gArg
-  typeCheckArgs funArgs givenArgs
+typeCheckArgs :: BNFC'Position -> [TType] -> [TType] -> TypeChecker ()
+typeCheckArgs _ [] [] = return ()
+typeCheckArgs p [] _ = throwPosError p "Function application Error: too many arguments"
+typeCheckArgs p _ []  = throwPosError p "Function application Error: too few arguments"
+typeCheckArgs p (fArg : funArgs) (gArg : givenArgs) = do
+  typeCheckArg p fArg gArg
+  typeCheckArgs p funArgs givenArgs
 
-typeCheckArg :: TType -> TType -> TypeChecker ()
-typeCheckArg expected given = do 
-  let expectedType = getTypeFromType expected
-  let givenType = getTypeFromType given 
+typeCheckArg :: BNFC'Position -> TType -> TType -> TypeChecker ()
+typeCheckArg pos expected given = do
+  let expectedType = getTypeFrom expected
+  let givenType = getTypeFrom given
   unless (expectedType == givenType)
-  $ throwError $ "Function application Error: expected type " ++ show expected ++ ", but got " ++ show given ++ " instead."
+  $ throwPosError pos ("Function application Error: expected type " ++ printTree expected ++ ", but got " ++ printTree given ++ " instead.")
 
 -- | Type check types
 typeCheckTypes :: [Type] -> TypeChecker ()
@@ -167,84 +158,71 @@ typeCheckExpr (ExpString _ _) = return $ String ()
 typeCheckExpr (ExpLitTrue _) = return $ Boolean ()
 typeCheckExpr (ExpLitFalse _) = return $ Boolean ()
 
-typeCheckExpr (ExpApp _ f args) = do
+typeCheckExpr (ExpApp p f args) = do
   functionArgsTypes <- getFunctionArgTypesFromEnv f
   rtrnType <- getFunctionRetTypeFromEnv f
   unless (length functionArgsTypes == length args)
-    $ throwError $ "Function application Error: expected " ++ show (length functionArgsTypes) ++ " arguments, but got " ++ show (length args) ++ " instead."
+    $ throwPosError p ("Function application Error: expected " ++ show (length functionArgsTypes) ++ " arguments, but got " ++ show (length args) ++ " instead.")
   givenArgs <- mapM typeCheckExpr args
-  typeCheckArgs functionArgsTypes givenArgs
-  return rtrnType 
+  typeCheckArgs p functionArgsTypes givenArgs
+  return rtrnType
 
-typeCheckExpr (ExpNeg _ e) = do
+typeCheckExpr (ExpNeg p e) = do
   tempType <- typeCheckExpr e
-  let varType = getTypeFromType tempType
+  let varType = getTypeFrom tempType
   unless (varType == Integer ())
-    $ throwError $ "Negation Error: expected type was Integer (), but got " ++ show varType ++ " instead."
+    $ throwPosError p ("Negation Error: expected type was Integer, but got " ++ printTree varType ++ " instead.")
   return $ Integer ()
 
-typeCheckExpr (ExpNot _ e) = do
+typeCheckExpr (ExpNot p e) = do
   tempType <- typeCheckExpr e
-  let varType = getTypeFromType tempType
+  let varType = getTypeFrom tempType
   unless (varType == Boolean ())
-    $ throwError $ "Negation Error: expected type was Boolean (), but got " ++ show varType ++ " instead."
+    $ throwPosError p ("Negation Error: expected type was Boolean, but got " ++ printTree varType ++ " instead.")
   return $ Boolean ()
 
-typeCheckExpr (ExpMul _ e1 _ e2) = do
-  tempType1 <- typeCheckExpr e1
-  tempType2 <- typeCheckExpr e2
-  let varType1 = getTypeFromType tempType1
-  let varType2 = getTypeFromType tempType2
-  unless (varType1 == Integer () && varType2 == Integer ())
-    $ throwError $ "Multiplication Error: expected types were Integer (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
+typeCheckExpr (ExpMul p e1 _ e2) = do
+  _ <- typeCheckBinop p e1 e2 [Integer ()]
   return $ Integer ()
 
-typeCheckExpr (ExpAdd _ e1 _ e2) = do
-  tempType1 <- typeCheckExpr e1
-  tempType2 <- typeCheckExpr e2
-  let varType1 = getTypeFromType tempType1
-  let varType2 = getTypeFromType tempType2
-  if varType1 == String () && varType2 == String () then return $ String ()
-  else if varType1 == Integer () && varType2 == Integer () then return $ Integer ()
-  else
-    throwError $ "Addition Error: expected types were either both Integer () or String (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
+typeCheckExpr (ExpAdd p e1 _ e2) = do
+  typeCheckBinop p e1 e2 [Integer ()]
 
-typeCheckExpr (ExpRel _ e1 _ e2) = do
-  tempType1 <- typeCheckExpr e1
-  tempType2 <- typeCheckExpr e2
-  let varType1 = getTypeFromType tempType1
-  let varType2 = getTypeFromType tempType2
-  unless (varType1 == varType2)
-    $ throwError $ "Relational Error: cannot do relation operation on mismatch types: " ++ show varType1 ++ " and " ++ show varType2
+typeCheckExpr (ExpRel p e1 _ e2) = do
+  _ <- typeCheckBinop p e1 e2 [Integer (), String (), Boolean ()]
   return $ Boolean ()
 
-typeCheckExpr (ExpAnd _ e1 e2) = do
-  tempType1 <- typeCheckExpr e1
-  tempType2 <- typeCheckExpr e2
-  let varType1 = getTypeFromType tempType1
-  let varType2 = getTypeFromType tempType2
-  unless (varType1 == Boolean () && varType2 == Boolean ())
-    $ throwError $ "And Error: expected types were Boolean (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
+typeCheckExpr (ExpAnd p e1 e2) = do
+  _ <- typeCheckBinop p e1 e2 [Boolean ()]
   return $ Boolean ()
 
-typeCheckExpr (ExpOr _ e1 e2) = do
-  tempType1 <- typeCheckExpr e1
-  tempType2 <- typeCheckExpr e2
-  let varType1 = getTypeFromType tempType1
-  let varType2 = getTypeFromType tempType2
-  unless (varType1 == Boolean () && varType2 == Boolean ())
-    $ throwError $ "Or Error: expected types were Boolean (), but got " ++ show varType1 ++ " and " ++ show varType2 ++ " instead."
+typeCheckExpr (ExpOr p e1 e2) = do
+  _ <- typeCheckBinop p e1 e2 [Boolean ()]
   return $ Boolean ()
 
 typeCheckExpr (ExpLambda _ args t blck) = do
-  let functionType = omitPosition t
+  processFunction t args blck
+  rtrnT <- typeCheckType t
+  let argTypes' = fmap getArgType args
+  return $ Function () rtrnT argTypes'
+
+-- | Helper Typechecker functions.
+processFunction :: Type -> [Arg] -> FunBlock -> TypeChecker ()
+processFunction functionType args blck = do
   env <- get
   forM_ args $ \a -> case a of
     ArgVal _ tp _ -> modify (Map.insert (getArgName a) (omitPosition tp))
     ArgRef _ tp _ -> modify (Map.insert (getArgName a) (omitPositionRef tp))
-  typeCheckFunctionBlock functionType blck
+  let functionType' = omitPosition functionType
+  typeCheckFunctionBlock functionType' blck
   put env
 
-  rtrnT <- typeCheckType t
-  let argTypes' = fmap getArgType args
-  return $ Function () rtrnT argTypes'
+typeCheckBinop :: BNFC'Position -> Expr -> Expr -> [TType] -> TypeChecker TType
+typeCheckBinop p e1 e2 expected = do
+  t1 <- typeCheckExpr e1
+  t2 <- typeCheckExpr e2
+  let t1' = getTypeFrom t1
+  let t2' = getTypeFrom t2
+  unless (t1' `elem` expected && t1' == t2')
+    $ throwPosError p ("Binary operation Error: expected types " ++ printTree t1' ++ ", but got " ++ printTree t1' ++ " and " ++ printTree t2' ++ " instead.")
+  return t1'

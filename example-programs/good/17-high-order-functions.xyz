@@ -1,0 +1,13 @@
+Integer function doubleApply(Integer(Integer) f, Integer x) {
+  return f(f(x));
+}
+
+Integer function increment(Integer x) {
+  return x + 1;
+}
+
+Integer function main() {
+  Integer z = 5;
+  printInteger(doubleApply(increment, z)); // 7
+  return 0;
+}

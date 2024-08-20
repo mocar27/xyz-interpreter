@@ -6,7 +6,8 @@ Integer function funVar(var Integer  x) {
 Integer function funVal(Integer(Integer) f){
   Integer z = 110;
   printInteger(f(z));
-  printInteger(f(z+z)); // bez tej linii działa, z nią Evaluator failed!
+  Integer c = z + z;
+  printInteger(f(c)); // bez tej linii działa, z nią Evaluator failed!
   printInteger(z);
   return z;
 }

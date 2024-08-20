@@ -1,0 +1,21 @@
+Integer(Integer) function chainFunctions(Integer(Integer) f, Integer(Integer) g) {
+  Integer function chained(Integer x) {
+    return g(f(x));
+  }
+  return chained;
+}
+
+Integer function increment(Integer x) {
+  return x + 1;
+}
+
+Integer function double(Integer x) {
+  return x * 2;
+}
+
+Integer function main() {
+  Integer(Integer) incrementThenDouble = chainFunctions(increment, double);
+  Integer z = 5;
+  printInteger(incrementThenDouble(z)); // 12 (najpierw 5+1=6, potem 6*2=12)
+  return 0;
+}

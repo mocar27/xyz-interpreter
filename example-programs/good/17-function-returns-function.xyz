@@ -1,0 +1,13 @@
+Integer(Integer) function makeAdder(Integer y) {
+  Integer function adder(Integer x) {
+    return x + y;
+  }
+  return adder;
+}
+
+Integer function main() {
+  Integer(Integer) add5 = makeAdder(5);
+  Integer z = 10;
+  printInteger(add5(z)); // 15
+  return 0;
+}
